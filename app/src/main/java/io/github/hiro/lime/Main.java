@@ -48,7 +48,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import io.github.hiro.lime.hooks.*;
 
 public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHookZygoteInit {
-    private static final String TARGET_PACKAGE = "jp.naver.line.android";
+    private static final String TARGET_PACKAGE = "jp.naver.line1.android";
     private static boolean isContextInitialized = false;
     public static String modulePath;
     public static LimeOptions limeOptions = new LimeOptions();
@@ -211,7 +211,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
             prefs.loadSettings(limeOptions);
             Toast.makeText(context, "設定を正常に読み込みました", Toast.LENGTH_LONG).show();
             android.os.Process.killProcess(Process.myPid());
-            context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+            context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
 
         } catch (Exception e) {
             Toast.makeText(context, "設定の読み込みに失敗: " + e.getMessage(), Toast.LENGTH_LONG).show();
