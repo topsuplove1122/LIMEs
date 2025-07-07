@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -19,9 +19,9 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
-import io.github.hiro.lime.Utils;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
+import io.github.hiro.lime_1.Utils;
 
 public class AddRegistrationOptions implements IHook {
 
