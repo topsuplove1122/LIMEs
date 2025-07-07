@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.app.Activity;
 import android.app.AndroidAppHelper;
@@ -29,7 +29,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -357,7 +357,7 @@ public class AutoUpdate implements IHook {
     private String getCurrentVersion(Context context) {
         try {
             PackageInfo pInfo = context.getPackageManager()
-                    .getPackageInfo("io.github.hiro.lime", 0);
+                    .getPackageInfo("io.github.hiro.lime_1", 0);
             return pInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             return "0.0.0";
