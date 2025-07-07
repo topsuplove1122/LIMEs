@@ -1,4 +1,4 @@
-package io.github.hiro.lime;
+package io.github.hiro.lime_1;
 
 import android.content.Context;
 import android.content.res.AssetManager;
