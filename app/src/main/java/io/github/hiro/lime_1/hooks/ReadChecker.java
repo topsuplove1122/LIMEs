@@ -1,7 +1,7 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 
-import static io.github.hiro.lime.Main.limeOptions;
+import static io.github.hiro.lime_1.Main.limeOptions;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -65,8 +65,8 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
 public class ReadChecker implements IHook {
     private SQLiteDatabase limeDatabase;
     private SQLiteDatabase db3 = null;
@@ -124,7 +124,7 @@ public class ReadChecker implements IHook {
 
 
                     Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                            "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                            "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                     initializeLimeDatabase(appContext);
                     catchNotification(loadPackageParam, db3, db4, appContext, moduleContext);
                 }
@@ -147,7 +147,7 @@ public class ReadChecker implements IHook {
                 }
             }
         });
-        Class<?> chatHistoryActivityClass = XposedHelpers.findClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity", loadPackageParam.classLoader);
+        Class<?> chatHistoryActivityClass = XposedHelpers.findClass("jp.naver.line1.android.activity.chathistory.ChatHistoryActivity", loadPackageParam.classLoader);
         XposedHelpers.findAndHookMethod(chatHistoryActivityClass, "onCreate", Bundle.class, new XC_MethodHook() {
             private Context moduleContext;
             private Context activityContext;
@@ -160,7 +160,7 @@ public class ReadChecker implements IHook {
                 if (moduleContext == null) {
                     try {
                         moduleContext = appContext.createPackageContext(
-                                "io.github.hiro.lime",
+                                "io.github.hiro.lime_1",
                                 Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY
                         );
                     } catch (PackageManager.NameNotFoundException e) {
@@ -221,7 +221,7 @@ public class ReadChecker implements IHook {
 
         if (drawable == null) {
             int resId = moduleContext.getResources().getIdentifier(
-                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime");
+                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime_1");
             if (resId != 0) {
                 drawable = moduleContext.getResources().getDrawable(resId);
             }
@@ -296,7 +296,7 @@ public class ReadChecker implements IHook {
             if (dir == null) return;
             if (dir.findFile(imageName) != null) return;
             int resId = moduleContext.getResources().getIdentifier(
-                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime");
+                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime_1");
             if (resId == 0) return;
 
             try (InputStream in = moduleContext.getResources().openRawResource(resId);
@@ -919,7 +919,7 @@ public class ReadChecker implements IHook {
                             Context moduleContext;
                             try {
                                 moduleContext = appContext.createPackageContext(
-                                        "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                        "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                             } catch (PackageManager.NameNotFoundException e) {
                                 //("Failed to create package context: " + e.getMessage());
                                 return;
