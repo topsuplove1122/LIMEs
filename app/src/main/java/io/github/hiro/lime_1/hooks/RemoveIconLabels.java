@@ -1,11 +1,11 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.view.View;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class RemoveIconLabels implements IHook {
     @Override
@@ -13,7 +13,7 @@ public class RemoveIconLabels implements IHook {
         if (!limeOptions.removeIconLabels.checked) return;
 
         XposedBridge.hookAllConstructors(
-                loadPackageParam.classLoader.loadClass("jp.naver.line.android.activity.main.bottomnavigationbar.BottomNavigationBarTextView"),
+                loadPackageParam.classLoader.loadClass("jp.naver.line1.android.activity.main.bottomnavigationbar.BottomNavigationBarTextView"),
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
