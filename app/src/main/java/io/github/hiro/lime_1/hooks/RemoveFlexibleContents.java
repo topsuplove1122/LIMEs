@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.view.View;
@@ -8,7 +8,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class RemoveFlexibleContents implements IHook {
     int recommendationResId, serviceNameResId, notificationResId;
@@ -18,7 +18,7 @@ public class RemoveFlexibleContents implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         XposedBridge.hookAllMethods(
-                loadPackageParam.classLoader.loadClass("jp.naver.line.android.activity.main.MainActivity"),
+                loadPackageParam.classLoader.loadClass("jp.naver.line1.android.activity.main.MainActivity"),
                 "onResume",
                 new XC_MethodHook() {
                     @Override
