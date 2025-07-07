@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">LIMEs</string>
+    <string name="app_name" translatable="false">LIMEs_1</string>
     <!-- General -->
     <string name="positive_button">OK</string>
     <string name="negative_button">Cancel</string>
