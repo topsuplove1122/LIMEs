@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.app.AndroidAppHelper;
 import android.app.Application;
@@ -13,8 +13,8 @@ import java.io.File;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
 
 public class BlockCheck implements IHook {
 
@@ -57,7 +57,7 @@ public class BlockCheck implements IHook {
                                         String paramValue = param.args[1].toString();
                                         if (paramValue.contains("sync_result(")) {
                                             Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                                    "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                                    "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
 
 
                                             String operationsPart = paramValue.split("operations:\\[")[1].split("\\]")[0];
