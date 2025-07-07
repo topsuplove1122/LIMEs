@@ -1,4 +1,4 @@
-package io.github.hiro.lime;
+package io.github.hiro.lime_1;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -44,8 +44,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import io.github.hiro.lime.hooks.CustomPreferences;
-import io.github.hiro.lime.hooks.DocumentPreferences;
+import io.github.hiro.lime_1.hooks.CustomPreferences;
+import io.github.hiro.lime_1.hooks.DocumentPreferences;
 
 public class MainActivity extends Activity {
     public LimeOptions limeOptions = new LimeOptions();
