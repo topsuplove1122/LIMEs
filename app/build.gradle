@@ -3,14 +3,14 @@ plugins {
 }
 
 android {
-    namespace 'io.github.hiro.lime'
+    namespace 'io.github.hiro.lime_1'
     compileSdk 35
 
     defaultConfig {
         minSdk 22
         targetSdk 35
         versionCode 116160
-        versionName "1.28.5alpha"
+        versionName "1.28.5alpha_clone"
         multiDexEnabled true
 
 
