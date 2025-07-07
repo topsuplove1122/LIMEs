@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -8,8 +8,8 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 public class Constants {
-    public static  String PACKAGE_NAME = "jp.naver.line.android";
-    public static  String MODULE_NAME = "io.github.hiro.lime";
+    public static  String PACKAGE_NAME = "jp.naver.line1.android";
+    public static  String MODULE_NAME = "io.github.hiro.lime_1";
 
     //TRADITIONAL_CHINESE
     static  HookTarget USER_AGENT_HOOK = new  HookTarget("qi1.c", "j");
