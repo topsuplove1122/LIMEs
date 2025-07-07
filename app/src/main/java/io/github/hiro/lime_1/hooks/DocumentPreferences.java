@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.content.Intent;
@@ -20,7 +20,7 @@ import java.io.OutputStream;
 import java.util.Date;
 import java.util.Properties;
 
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class DocumentPreferences {
     private static final String TAG = "DocumentPreferences";
