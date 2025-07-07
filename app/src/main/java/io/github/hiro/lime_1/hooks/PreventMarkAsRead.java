@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
@@ -43,7 +43,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class PreventMarkAsRead implements IHook {
     private boolean isSendChatCheckedEnabled = false; // デフォルト値
@@ -53,7 +53,7 @@ public class PreventMarkAsRead implements IHook {
 
 
         if (limeOptions.preventMarkAsRead.checked ) {
-            Class<?> chatHistoryActivityClass = XposedHelpers.findClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity", loadPackageParam.classLoader);
+            Class<?> chatHistoryActivityClass = XposedHelpers.findClass("jp.naver.line1.android.activity.chathistory.ChatHistoryActivity", loadPackageParam.classLoader);
             XposedHelpers.findAndHookMethod(chatHistoryActivityClass, "onCreate", Bundle.class, new XC_MethodHook() {
                 Context moduleContext;
 
@@ -62,7 +62,7 @@ public class PreventMarkAsRead implements IHook {
                     if (moduleContext == null) {
                         try {
                             Context systemContext = (Context) XposedHelpers.callMethod(param.thisObject, "getApplicationContext");
-                            moduleContext = systemContext.createPackageContext("io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                            moduleContext = systemContext.createPackageContext("io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                         } catch (Exception e) {
                             XposedBridge.log("Lime: Failed to get module context: " + e.getMessage());
                         }
@@ -154,7 +154,7 @@ public class PreventMarkAsRead implements IHook {
                     // 3. それでも失敗した場合はモジュールリソースを使用
                     if (drawable == null) {
                         int resId = moduleContext.getResources().getIdentifier(
-                                imageName.replace(".png", ""), "drawable", "io.github.hiro.lime");
+                                imageName.replace(".png", ""), "drawable", "io.github.hiro.lime_1");
                         if (resId != 0) {
                             drawable = moduleContext.getResources().getDrawable(resId);
                         }
@@ -183,7 +183,7 @@ public class PreventMarkAsRead implements IHook {
 
                         // モジュールリソースから読み込み
                         int resId = moduleContext.getResources().getIdentifier(
-                                imageName.replace(".png", ""), "drawable", "io.github.hiro.lime");
+                                imageName.replace(".png", ""), "drawable", "io.github.hiro.lime_1");
                         if (resId == 0) return;
 
                         try (InputStream in = moduleContext.getResources().openRawResource(resId);
