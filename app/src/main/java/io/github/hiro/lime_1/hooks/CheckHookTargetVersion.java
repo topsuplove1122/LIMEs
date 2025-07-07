@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -7,16 +7,16 @@ import android.widget.Toast;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
-import io.github.hiro.lime.Utils;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
+import io.github.hiro.lime_1.Utils;
 
 public class CheckHookTargetVersion implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         if (limeOptions.stopVersionCheck.checked) return;
         XposedBridge.hookAllMethods(
-                loadPackageParam.classLoader.loadClass("jp.naver.line.android.activity.SplashActivity"),
+                loadPackageParam.classLoader.loadClass("jp.naver.line1.android.activity.SplashActivity"),
                 "onCreate",
                 new XC_MethodHook() {
                     @Override
