@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.app.Activity;
 import android.app.AndroidAppHelper;
@@ -25,19 +25,19 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
 
 public class AutomaticBackup implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
 
-        XposedHelpers.findAndHookMethod("jp.naver.line.android.activity.schemeservice.LineSchemeServiceActivity",
+        XposedHelpers.findAndHookMethod("jp.naver.line1.android.activity.schemeservice.LineSchemeServiceActivity",
                 loadPackageParam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                         Intent intent = ((Activity) param.thisObject).getIntent();
                         handleIntent(intent, param.thisObject,moduleContext);
                     }
@@ -109,7 +109,7 @@ public class AutomaticBackup implements IHook {
     }
 
     private void backupChatsFolder(Context appContext, Context moduleContext) {
-        File originalChatsDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/files/chats");
+        File originalChatsDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/files/chats");
         String backupUriStr = loadBackupUri(moduleContext);
 
         if (backupUriStr == null) {
