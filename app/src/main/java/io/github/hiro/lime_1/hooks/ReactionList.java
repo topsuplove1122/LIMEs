@@ -1,8 +1,8 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
-import static io.github.hiro.lime.Main.limeOptions;
-import static io.github.hiro.lime.Utils.dpToPx;
+import static io.github.hiro.lime_1.Main.limeOptions;
+import static io.github.hiro.lime_1.Utils.dpToPx;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -36,7 +36,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class ReactionList implements IHook {
     private static final int CLOSE_BUTTON_ID = 0x7f0b087f;
@@ -221,7 +221,7 @@ public class ReactionList implements IHook {
             int baseImageSize = (metrics.widthPixels / metrics.density < 360) ? 24 : 28;
             int imageSize = dpToPx(baseImageSize, context);
 
-            Context moduleContext = context.createPackageContext("io.github.hiro.lime", 0);
+            Context moduleContext = context.createPackageContext("io.github.hiro.lime_1", 0);
 
             GridLayout grid = new GridLayout(context);
             grid.setColumnCount(3);
@@ -237,7 +237,7 @@ public class ReactionList implements IHook {
                 if (count > 0) {
                     String resourceName = REACTION_IMAGE_NAMES.get(type);
                     int resourceId = moduleContext.getResources().getIdentifier(
-                            resourceName, "raw", "io.github.hiro.lime");
+                            resourceName, "raw", "io.github.hiro.lime_1");
 
                     if (resourceId != 0) {
                         InputStream is = moduleContext.getResources().openRawResource(resourceId);
