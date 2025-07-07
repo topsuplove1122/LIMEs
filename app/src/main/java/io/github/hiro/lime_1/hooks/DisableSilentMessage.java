@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import static de.robv.android.xposed.XposedBridge.log;
 
@@ -28,8 +28,8 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
 
 public class DisableSilentMessage implements IHook {
     private SQLiteDatabase db3 = null;
@@ -178,7 +178,7 @@ public class DisableSilentMessage implements IHook {
                                                   name = name != null ? name : "null";
 
                                                   Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                                          "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                                          "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
 
                                                   String mediaDescription = "";
                                                   if (media != null) {
