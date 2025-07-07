@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -13,7 +13,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class SendMuteMessage implements IHook {
     private static boolean isHandlingHook = false;
@@ -82,7 +82,7 @@ public class SendMuteMessage implements IHook {
                         }
                     }
                     private String getStringByName(Resources resources, String resourceEntryName) {
-                            int replacementId = resources.getIdentifier(resourceEntryName, "string", "jp.naver.line.android");
+                            int replacementId = resources.getIdentifier(resourceEntryName, "string", "jp.naver.line1.android");
                             if (replacementId != 0) {
                                 return resources.getString(replacementId);
                             }
@@ -100,7 +100,7 @@ public class SendMuteMessage implements IHook {
                         ListView listView = (ListView) param.thisObject;
                         if (listView.getTag() != null) return;
                         Context context = listView.getContext();
-                        if (!(context instanceof ContextWrapper) || !((ContextWrapper) context).getBaseContext().getClass().getName().equals("jp.naver.line.android.activity.chathistory.ChatHistoryActivity"))
+                        if (!(context instanceof ContextWrapper) || !((ContextWrapper) context).getBaseContext().getClass().getName().equals("jp.naver.line1.android.activity.chathistory.ChatHistoryActivity"))
                             return;
                         if (listView.getChildCount() == 2) {
                             ViewGroup viewGroup0 = (ViewGroup) listView.getChildAt(0);
