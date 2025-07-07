@@ -1,5 +1,5 @@
 
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 
 import android.app.AndroidAppHelper;
@@ -40,7 +40,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 
 public class KeepUnread implements IHook {
@@ -63,7 +63,7 @@ public class KeepUnread implements IHook {
                         View rootView = (View) param.getResult();
                         Context context = rootView.getContext();
                         Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
 
                         RelativeLayout layout = new RelativeLayout(context);
                         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
@@ -174,7 +174,7 @@ public class KeepUnread implements IHook {
                         }
                         if (drawable == null) {
                             int resId = moduleContext.getResources().getIdentifier(
-                                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime");
+                                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime_1");
                             if (resId != 0) {
                                 drawable = moduleContext.getResources().getDrawable(resId);
                             }
@@ -203,7 +203,7 @@ public class KeepUnread implements IHook {
 
                             // モジュールリソースから読み込み
                             int resId = moduleContext.getResources().getIdentifier(
-                                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime");
+                                    imageName.replace(".png", ""), "drawable", "io.github.hiro.lime_1");
                             if (resId == 0) return;
 
                             try (InputStream in = moduleContext.getResources().openRawResource(resId);
