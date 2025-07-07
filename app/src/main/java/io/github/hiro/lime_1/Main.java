@@ -1,4 +1,4 @@
-package io.github.hiro.lime;
+package io.github.hiro.lime_1;
 
 import android.app.Activity;
 import android.app.AndroidAppHelper;
@@ -45,7 +45,7 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_InitPackageResources;
 import de.robv.android.xposed.callbacks.XC_LayoutInflated;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.hooks.*;
+import io.github.hiro.lime_1.hooks.*;
 
 public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResources, IXposedHookZygoteInit {
     private static final String TARGET_PACKAGE = "jp.naver.line1.android";
