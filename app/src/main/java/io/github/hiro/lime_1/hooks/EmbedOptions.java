@@ -1,7 +1,7 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 
-import static io.github.hiro.lime.Main.limeOptions;
+import static io.github.hiro.lime_1.Main.limeOptions;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -81,10 +81,10 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.BuildConfig;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
-import io.github.hiro.lime.Utils;
+import io.github.hiro.lime_1.BuildConfig;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
+import io.github.hiro.lime_1.Utils;
 
 public class EmbedOptions implements IHook {
     @Override
@@ -100,7 +100,7 @@ public class EmbedOptions implements IHook {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         Context contextV = getTargetAppContext(loadPackageParam);
                         Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                         String backupUri = loadBackupUri(contextV);
                         if (backupUri == null) {
                             XposedBridge.log("Lime: Settings URI not configured");
@@ -510,7 +510,7 @@ public class EmbedOptions implements IHook {
                                                 Process.killProcess(Process.myPid());
                                                 contextV.startActivity(new Intent()
                                                         .setClassName(Constants.PACKAGE_NAME,
-                                                                "jp.naver.line.android.activity.SplashActivity"));
+                                                                "jp.naver.line1.android.activity.SplashActivity"));
 
                                             } catch (IOException e) {
                                                 Toast.makeText(contextV,
@@ -609,7 +609,7 @@ public class EmbedOptions implements IHook {
                                             }
                                             Toast.makeText(context.getApplicationContext(), context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
                                             Process.killProcess(Process.myPid());
-                                            context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+                                            context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
                                         }
                                     });
 
@@ -662,7 +662,7 @@ public class EmbedOptions implements IHook {
                                     } else if (optionChanged) {
                                         Toast.makeText(context.getApplicationContext(), context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
                                         Process.killProcess(Process.myPid());
-                                        context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+                                        context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
                                     }
                                 });
 
@@ -774,7 +774,7 @@ public class EmbedOptions implements IHook {
                                 @Override
                                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                                     Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                            "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                            "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                                     int requestCode = (int) param.args[0];
                                     int resultCode = (int) param.args[1];
                                     Intent data = (Intent) param.args[2];
@@ -987,7 +987,7 @@ public class EmbedOptions implements IHook {
                 Toast.makeText(context, context.getString(R.string.save_failed), Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(context.getApplicationContext(), context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
-                context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+                context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
                 Process.killProcess(Process.myPid());
             }
         });
@@ -1225,7 +1225,7 @@ public class EmbedOptions implements IHook {
         saveButton.setBackgroundColor(Color.DKGRAY);
         saveButton.setOnClickListener(v -> {
             Toast.makeText(context, context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
-            context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+            context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
             Process.killProcess(Process.myPid());
         });
         layout.addView(saveButton);
@@ -1576,7 +1576,7 @@ public class EmbedOptions implements IHook {
                         customPreferences.saveSetting("encoded_js_modify_request", Base64.encodeToString(code.getBytes(), Base64.NO_WRAP));
                         Toast.makeText(context.getApplicationContext(), context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
                         Process.killProcess(Process.myPid());
-                        context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+                        context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
                     }
                 })
                 .setNegativeButton(R.string.negative_button, null)
@@ -1657,7 +1657,7 @@ public class EmbedOptions implements IHook {
                         customPreferences.saveSetting("encoded_js_modify_response", Base64.encodeToString(code.getBytes(), Base64.NO_WRAP));
                         Toast.makeText(context.getApplicationContext(), context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
                         Process.killProcess(Process.myPid());
-                        context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+                        context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
                     }
                 })
                 .setNegativeButton(R.string.negative_button, null)
@@ -1672,7 +1672,7 @@ public class EmbedOptions implements IHook {
 
         if (!dir.exists()) {
 
-            dir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/LimeBackup/Setting");
+            dir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/LimeBackup/Setting");
 
             if (!dir.exists()) {
 
@@ -2173,7 +2173,7 @@ public class EmbedOptions implements IHook {
 
         if (!dir.exists()) {
             if (!dir.mkdirs()) {
-                dir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/");
+                dir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/");
             }
         }
 
@@ -3390,11 +3390,11 @@ public class EmbedOptions implements IHook {
     }
 
     private void backupChatsFolder(Context context,Context moduleContext) {
-        File originalChatsDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/files/chats");
+        File originalChatsDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/files/chats");
         File backupDir = new File(context.getFilesDir(), "LimeBackup");
 
         if (!backupDir.exists() && !backupDir.mkdirs()) {
-            backupDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/backup");
+            backupDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/backup");
             if (!backupDir.exists() && !backupDir.mkdirs()) {
                 Toast.makeText(context, "Failed to create backup directory", Toast.LENGTH_SHORT).show();
                 return;
@@ -3449,9 +3449,9 @@ public class EmbedOptions implements IHook {
 
     private void restoreChatsFolder(Context context, Context moduleContext) {
         File backupDir = new File(context.getFilesDir(), "LimeBackup/chats_backup");
-        File originalChatsDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/files/chats");
+        File originalChatsDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/files/chats");
         if (!backupDir.exists()) {
-            File alternativeBackupDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line.android/backup/chats_backup");
+            File alternativeBackupDir = new File(Environment.getExternalStorageDirectory(), "Android/data/jp.naver.line1.android/backup/chats_backup");
             if (!alternativeBackupDir.exists()) {
                 Toast.makeText(context, moduleContext.getResources().getString(R.string.Restore_Chat_Photo_Not_Folder), Toast.LENGTH_SHORT).show();
                 return;
