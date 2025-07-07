@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 
@@ -7,7 +7,7 @@ import android.text.SpannedString;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 public class SettingCrash implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
