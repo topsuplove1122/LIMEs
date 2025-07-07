@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
 
-import io.github.hiro.lime.R;
+import io.github.hiro.lime_1.R;
 
 public class CustomPreferences {
     private static final String SETTINGS_DIR = "LimeBackup/Setting";
