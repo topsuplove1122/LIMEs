@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import static java.lang.Integer.parseInt;
 
@@ -22,9 +22,9 @@ import java.util.List;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
-import io.github.hiro.lime.Utils;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
+import io.github.hiro.lime_1.Utils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -38,7 +38,7 @@ public class InstallModule implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         XposedBridge.hookAllMethods(
-                loadPackageParam.classLoader.loadClass("jp.naver.line.android.activity.SplashActivity"),
+                loadPackageParam.classLoader.loadClass("jp.naver.line1.android.activity.SplashActivity"),
                 "onCreate",
                 new XC_MethodHook() {
                     @Override
@@ -47,7 +47,7 @@ public class InstallModule implements IHook {
 
                         try {
                             Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                    "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                    "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                             moduleContext.getResources();
 
                         } catch (Exception e) {
@@ -165,7 +165,7 @@ public class InstallModule implements IHook {
     private String getCurrentVersion(Context context) {
         try {
             PackageInfo pInfo = context.getPackageManager()
-                    .getPackageInfo("io.github.hiro.lime", 0);
+                    .getPackageInfo("io.github.hiro.lime_1", 0);
             return pInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             return "0.0.0";
