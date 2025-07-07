@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -42,8 +42,8 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
-import io.github.hiro.lime.R;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
 
 public class UnsentRec implements IHook {
     public static final String Main_file = "UNSENT_REC.txt";
@@ -52,7 +52,7 @@ public class UnsentRec implements IHook {
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
         if (!limeOptions.preventUnsendMessage.checked) return;
         XposedBridge.hookAllConstructors(
-                loadPackageParam.classLoader.loadClass("jp.naver.line.android.common.view.listview.PopupListView"),
+                loadPackageParam.classLoader.loadClass("jp.naver.line1.android.common.view.listview.PopupListView"),
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -60,7 +60,7 @@ public class UnsentRec implements IHook {
                         Context appContext = viewGroup.getContext();
                         Context context = viewGroup.getContext();
                         Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                         RelativeLayout container = new RelativeLayout(appContext);
                         RelativeLayout.LayoutParams containerParams = new RelativeLayout.LayoutParams(
                                 RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -166,7 +166,7 @@ public class UnsentRec implements IHook {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
 
                         View rootView = (View) param.getResult();
                         Context context = rootView.getContext();
@@ -287,7 +287,7 @@ public class UnsentRec implements IHook {
                 Context moduleContext;
                 try {
                     moduleContext = appContext.createPackageContext(
-                            "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                            "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                 } catch (PackageManager.NameNotFoundException ignored) {
                     return;
                 }
@@ -383,7 +383,7 @@ public class UnsentRec implements IHook {
                             String paramValue = param.args[1].toString();
                             if (paramValue.contains("type:NOTIFIED_DESTROY_MESSAGE,")) {
                                 Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                        "io.github.hiro.lime", Context.CONTEXT_IGNORE_SECURITY);
+                                        "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                                 processMessage(paramValue, moduleContext, db1, db2, context);
                             }
                         }
