@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -18,7 +18,7 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dalvik.system.DexFile;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -168,7 +168,7 @@ public class test implements IHook {
                 String className = classNames.nextElement();
 
                 // 指定されたパッケージで始まるクラスのみをフック
-                //  if (className.startsWith("com.linecorp.line") || className.startsWith("jp.naver.line.android")) {
+                //  if (className.startsWith("com.linecorp.line") || className.startsWith("jp.naver.line1.android")) {
                 try {
                     Class<?> clazz = Class.forName(className, false, classLoader);
                     hookAllMethods(clazz);
