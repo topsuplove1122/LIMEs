@@ -1,6 +1,6 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
-import static io.github.hiro.lime.Main.limeOptions;
+import static io.github.hiro.lime_1.Main.limeOptions;
 
 import android.app.AndroidAppHelper;
 import android.app.Application;
@@ -40,12 +40,12 @@ import java.util.Objects;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class PhotoAddNotification implements IHook {
 
     private static final int MAX_RETRIES = 20;
-    private static final String COPY_ACTION = "io.github.hiro.lime.COPY_TEXT";
+    private static final String COPY_ACTION = "io.github.hiro.lime_1.COPY_TEXT";
     private static final String TAG = "LimeModule";
     private boolean isReceiverRegistered = false;
     private static final long RETRY_DELAY = 1000;
@@ -390,7 +390,7 @@ public class PhotoAddNotification implements IHook {
         // XposedBridge.log("getFileWithId: Searching for file with id: " + id + " in chat: " + chatId);
 
         File messagesDir = new File(Environment.getExternalStorageDirectory(),
-                "/Android/data/jp.naver.line.android/files/chats/" + chatId + "/messages");
+                "/Android/data/jp.naver.line1.android/files/chats/" + chatId + "/messages");
 
         if (!messagesDir.exists() || !messagesDir.isDirectory()) {
             //XposedBridge.log("getFileWithId: Messages directory does not exist or is not a directory.");
