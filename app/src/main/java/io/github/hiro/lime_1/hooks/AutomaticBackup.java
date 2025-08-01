@@ -1,4 +1,4 @@
-package io.github.hiro.lime_1_1.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.app.Activity;
 import android.app.AndroidAppHelper;
@@ -26,8 +26,8 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime_1_1.LimeOptions;
-import io.github.hiro.lime_1_1.R;
+import io.github.hiro.lime_1.LimeOptions;
+import io.github.hiro.lime_1.R;
 
 public class AutomaticBackup implements IHook {
     @Override
@@ -38,7 +38,7 @@ public class AutomaticBackup implements IHook {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         Context moduleContext = AndroidAppHelper.currentApplication().createPackageContext(
-                                "io.github.hiro.lime_1_1", Context.CONTEXT_IGNORE_SECURITY);
+                                "io.github.hiro.lime_1", Context.CONTEXT_IGNORE_SECURITY);
                         Intent intent = ((Activity) param.thisObject).getIntent();
                         handleIntent(intent, param.thisObject, moduleContext);
                     }
@@ -204,6 +204,7 @@ public class AutomaticBackup implements IHook {
             }
         }
     }
+
     private String loadBackupUri(Context context) {
         File settingsFile = new File(context.getFilesDir(), "LimeBackup/backup_uri.txt");
         if (!settingsFile.exists()) return null;
@@ -217,7 +218,6 @@ public class AutomaticBackup implements IHook {
     }
 
 
-    
     private String getMimeType(String fileName) {
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         switch (extension) {
