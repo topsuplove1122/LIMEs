@@ -507,7 +507,7 @@ public class EmbedOptions implements IHook {
                                                         : "Error";
 
                                                 Toast.makeText(context.getApplicationContext(), context.getString(R.string.restarting), Toast.LENGTH_SHORT).show();
-                                                context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line.android.activity.SplashActivity"));
+                                                context.startActivity(new Intent().setClassName(Constants.PACKAGE_NAME, "jp.naver.line1.android.activity.SplashActivity"));
                                                 Process.killProcess(Process.myPid());
                                             } else {
                                                 toastMsg = "リセット対象の URI はありません";
