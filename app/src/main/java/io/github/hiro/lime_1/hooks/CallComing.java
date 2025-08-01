@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime_1.hooks;
 
 import android.app.AndroidAppHelper;
 import android.content.Context;
@@ -20,7 +20,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-import io.github.hiro.lime.LimeOptions;
+import io.github.hiro.lime_1.LimeOptions;
 
 public class CallComing implements IHook {
     private boolean isButtonAdded = false; // ボタンが追加されたかどうかを追跡するフラグ
@@ -36,7 +36,7 @@ public class CallComing implements IHook {
         if (!limeOptions.CallComing.checked) return;
         ClassLoader cl = loadPackageParam.classLoader;
         XposedHelpers.findAndHookConstructor(
-                "jp.naver.line.android.thrift.client.impl.TalkServiceClientImpl", cl, cl.loadClass("Wp1.k"),
+                "jp.naver.line1.android.thrift.client.impl.TalkServiceClientImpl", cl, cl.loadClass("Wp1.k"),
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
