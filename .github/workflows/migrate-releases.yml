@@ -12,13 +12,6 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Clean up runner disk
-        run: |
-          echo "Disk usage before cleanup:" && df -h
-          sudo rm -rf $RUNNER_TEMP/* $RUNNER_TOOL_CACHE/*
-          rm -rf $GITHUB_WORKSPACE/tmp || true
-          echo "Disk usage after cleanup:" && df -h
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -34,13 +27,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install PyGithub requests
 
-      - name: Migrate releases from LIMEs to PrtivateLIMEs
+      - name: Migrate latest release from LIMEs to PrtivateLIMEs
         env:
           MIGRATE_TOKEN: ${{ secrets.MIGRATE_TOKEN }}
           OLD_OWNER: areteruhiro
-          OLD_REPO: LIMEs
+          OLD_REPO: PrtivateLIMEs
           NEW_OWNER: areteruhiro
-          NEW_REPO: PrtivateLIMEs
+          NEW_REPO: LIMEs
         run: |
           if [ -z "$MIGRATE_TOKEN" ]; then
             echo "ERROR: MIGRATE_TOKEN is empty" >&2
@@ -56,36 +49,52 @@ jobs:
           src = Github(token).get_repo(f"{os.environ['OLD_OWNER']}/{os.environ['OLD_REPO']}")
           dst = Github(token).get_repo(f"{os.environ['NEW_OWNER']}/{os.environ['NEW_REPO']}")
 
-          for rel in src.get_releases():
-              tag = rel.tag_name
-              try:
-                  # すでに存在するかチェック
-                  dst.get_release(tag)
-                  print(f"→ Skipping existing release: {tag}")
+          releases = list(src.get_releases())
+          if not releases:
+              print("No releases found in source repository.")
+              exit(0)
+
+          rel = releases[0]  # 最新リリース
+          tag = rel.tag_name
+          try:
+              dst.get_release(tag)
+              print(f"→ Skipping existing release: {tag}")
+              exit(0)
+          except UnknownObjectException:
+              pass
+
+          print(f"→ Migrating latest release: {tag}")
+          new_rel = dst.create_git_release(
+              tag=tag,
+              name=rel.title or tag,
+              message=rel.body or "",
+              draft=rel.draft,
+              prerelease=rel.prerelease
+          )
+
+          session = requests.Session()
+          session.headers.update({
+              'Authorization': f'token {token}',
+              'Accept': 'application/octet-stream',
+              'User-Agent': 'github-release-migration-script'
+          })
+
+          for asset in rel.get_assets():
+              print(f"   • asset: {asset.name}")
+              asset_url = f"https://api.github.com/repos/{os.environ['OLD_OWNER']}/{os.environ['OLD_REPO']}/releases/assets/{asset.id}"
+              r = session.get(asset_url, allow_redirects=True)
+              if r.status_code != 200:
+                  print(f"⚠️ Failed to download asset {asset.name}, status code: {r.status_code}")
+                  print(f"Response text: {r.text[:200]}")
                   continue
-              except UnknownObjectException:
-                  pass
+              with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                  tmp.write(r.content)
+                  tmp.flush()
+                  new_rel.upload_asset(
+                      path=tmp.name,
+                      name=asset.name,
+                      label=asset.label or asset.name
+                  )
 
-              print(f"→ Migrating release: {tag}")
-              new_rel = dst.create_git_release(
-                  tag=tag,
-                  name=rel.title or tag,
-                  message=rel.body or "",
-                  draft=rel.draft,
-                  prerelease=rel.prerelease
-              )
-
-              for asset in rel.get_assets():
-                  print(f"   • asset: {asset.name}")
-                  r = requests.get(asset.browser_download_url,
-                                   headers={'Authorization': f'token {token}'})
-                  with tempfile.NamedTemporaryFile(delete=False) as tmp:
-                      tmp.write(r.content)
-                      tmp.flush()
-                      new_rel.upload_asset(
-                          path=tmp.name,
-                          name=asset.name,
-                          label=asset.label or asset.name
-                      )
           print("✅ Migration complete")
           EOF
