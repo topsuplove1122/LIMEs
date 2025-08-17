@@ -15,3 +15,9 @@ CallComing機能追加(通話開始時に、着信拒否になる、終わりに
 インテントバックアップのバグ修正, 取り消しメッセージの改行対応, URI削除機能, リアクションNULLバグ修正,
 1.29.5
 MessageSend機能の追加 https://t.me/LsPosedLIMEs/1649/7529　の修正適用 例の機能の修正
+
+
+1.29.6 予約送信機能重複対策
+リアクションカウント機能の強化
+ピン機能のバグの修正
+SendEnterChange_InChat,SendEnterChange_ChatListの追加
