@@ -125,10 +125,12 @@ public class LimeOptions {
         public Option WhiteToDark = new Option("WhiteToDark", R.string.WhiteToDark, false, OptionCategory.Theme);
 
     public Option StopCallTone = new Option("StopCallTone", R.string.StopCallTone, false, OptionCategory.CALL);
+    public Option fastShare = new Option("fast_share", R.string.fast_share, false, OptionCategory.CHAT);
 
 
     public Option[] options = {
                 removeOption,
+                fastShare,
                 removeVoom,
                 removeWallet,
                 removeNewsOrCall,
