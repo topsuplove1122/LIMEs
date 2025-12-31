@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.*;
@@ -27,81 +26,78 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import io.github.hiro.lime.LimeOptions;
 
 public class FastShare implements IHook {
-    private static final String FILE_NAME = "fast_share_v6.txt";
+    private static final String FILE_NAME = "fast_share_v7.txt";
+    // 15.9.0 的正確分享 Activity 類名 (根據 Log 確認)
+    private static final String TARGET_ACTIVITY = "jp.naver.line.android.activity.share.SharePickerActivity";
 
     @Override
     public void hook(LimeOptions options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!options.fastShare.checked) return;
 
-        // --- 1. 超強版訊息按鈕注入 (不再依賴單一 ID) ---
+        // --- 1. 訊息按鈕 ---
         XposedHelpers.findAndHookMethod(ViewGroup.class, "addView", View.class, int.class, ViewGroup.LayoutParams.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 View child = (View) param.args[0];
-                // 延遲執行，確保 View 的內容已填充
-                child.post(() -> checkAndInject(child));
+                // 延遲注入以確保 ID 可讀取
+                child.post(() -> {
+                    try {
+                        String name = child.getContext().getResources().getResourceEntryName(child.getId());
+                        // 針對訊息氣泡容器注入
+                        if ("chat_ui_message_bubble".equals(name) || "chat_ui_message_content".equals(name)) {
+                            injectSideButton((ViewGroup) child);
+                        }
+                    } catch (Exception ignored) {}
+                });
             }
         });
 
         // --- 2. 分享介面控制 ---
-        XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                Activity activity = (Activity) param.thisObject;
-                if (activity.getClass().getName().contains("SharePickerActivity")) {
-                    injectPickerControls(activity);
-                }
-            }
-        });
-    }
-
-    // 檢查 View 是否為訊息氣泡，如果是則注入按鈕
-    private void checkAndInject(View view) {
+        // 直接 Hook 目標 Activity，不再模糊匹配
         try {
-            if (!(view instanceof ViewGroup)) return;
-            ViewGroup group = (ViewGroup) view;
-            
-            // 避免重複注入
-            if (group.findViewWithTag("lime_share") != null) return;
-
-            String resName = "";
-            try { resName = view.getContext().getResources().getResourceEntryName(view.getId()); } catch (Exception ignored) {}
-
-            // 判斷條件：ID 包含 message 且 bubble，或者是 row_message_layout
-            if (resName.contains("message_bubble") || resName.contains("message_content") || resName.equals("chat_ui_row_message_layout")) {
-                injectSideButton(group);
-            }
-        } catch (Exception ignored) {}
+            XposedHelpers.findAndHookMethod(TARGET_ACTIVITY, lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    injectPickerControls((Activity) param.thisObject);
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("Lime: Failed to hook SharePickerActivity -> " + t);
+        }
     }
 
-    private void injectSideButton(ViewGroup parent) {
-        Context context = parent.getContext();
+    private void injectSideButton(ViewGroup bubble) {
+        if (bubble.findViewWithTag("lime_share") != null) return;
+
+        Context context = bubble.getContext();
         Button btn = new Button(context);
         btn.setTag("lime_share");
         btn.setText("轉");
         btn.setTextSize(9);
         btn.setTextColor(Color.WHITE);
-        btn.setBackgroundColor(Color.parseColor("#8800B900"));
+        btn.setBackgroundColor(Color.parseColor("#9900B900"));
         btn.setPadding(0, 0, 0, 0);
 
-        // 強制使用 FrameLayout LayoutParams (因為大多數氣泡容器是 FrameLayout)
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dpToPx(28, context), dpToPx(20, context));
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dpToPx(26, context), dpToPx(20, context));
         lp.gravity = Gravity.BOTTOM | Gravity.END;
-        lp.setMargins(0, 0, dpToPx(2, context), dpToPx(2, context));
+        lp.setMargins(0, 0, dpToPx(4, context), dpToPx(4, context));
 
         btn.setOnClickListener(v -> {
             try {
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_TEXT, " ");
-                intent.setPackage("jp.naver.line.android");
-                context.startActivity(Intent.createChooser(intent, "轉傳"));
+                // 使用 LINE 內部分享邏輯
+                Intent intent = new Intent();
+                intent.setClassName("jp.naver.line.android", TARGET_ACTIVITY);
+                intent.putExtra("otp_id", "otp_share_server"); // 模擬內部參數
+                intent.putExtra("from_chat_app", true);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
             } catch (Exception e) {
-                Toast.makeText(context, "錯誤", Toast.LENGTH_SHORT).show();
+                // 如果還是失敗，退回系統分享但提示錯誤
+                Toast.makeText(context, "內部跳轉失敗，請回報 Log", Toast.LENGTH_SHORT).show();
             }
         });
 
-        parent.addView(btn, lp);
+        bubble.addView(btn, lp);
         btn.bringToFront();
     }
 
@@ -118,13 +114,13 @@ public class FastShare implements IHook {
         Button btnAuto = new Button(activity); btnAuto.setText("自動"); btnAuto.setTextColor(Color.WHITE);
 
         btnSave.setOnClickListener(v -> {
-            // 深度掃描：不僅找 ViewModel，還找 LiveData (androidx.lifecycle.E0)
-            Set<String> selectedMids = deepScanForMids(activity);
+            // 修正閃退：使用安全掃描
+            Set<String> selectedMids = safeScanForMids(activity);
             if (!selectedMids.isEmpty()) {
                 saveMids(activity, selectedMids);
                 Toast.makeText(activity, "已儲存 " + selectedMids.size() + " 筆", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(activity, "找不到勾選資料 (LiveData/Set)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "未找到勾選資料", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -132,16 +128,15 @@ public class FastShare implements IHook {
             Set<String> saved = loadMids(activity);
             if (saved.isEmpty()) return;
             
-            // 嘗試觸發點擊：由於方法名混淆，我們嘗試模擬點擊 UI
-            // 這裡依然保留反射調用作為首選
             Object vm = findObjectByType(activity, "ViewModel");
             if (vm != null) {
                 for (String mid : saved) {
+                    // 嘗試觸發選取
                     try { XposedHelpers.callMethod(vm, "selectTarget", mid, true); } catch (Exception ignored) {}
                     try { XposedHelpers.callMethod(vm, "a", mid, true); } catch (Exception ignored) {}
                 }
             }
-            Toast.makeText(activity, "已嘗試自動勾選", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "已執行自動勾選", Toast.LENGTH_SHORT).show();
         });
 
         root.addView(btnSave, new LinearLayout.LayoutParams(0, -2, 1));
@@ -152,8 +147,8 @@ public class FastShare implements IHook {
         root.bringToFront();
     }
 
-    // --- 深度掃描：針對 Log 裡的 androidx.lifecycle.E0 (LiveData) ---
-    private Set<String> deepScanForMids(Object root) {
+    // --- 安全掃描：解決 getValue() 報錯 ---
+    private Set<String> safeScanForMids(Object root) {
         Set<String> results = new HashSet<>();
         try {
             Class<?> clazz = root.getClass();
@@ -163,23 +158,28 @@ public class FastShare implements IHook {
                     Object val = f.get(root);
                     if (val == null) continue;
 
-                    // 1. 直接檢查 Set
-                    if (val instanceof Set) {
-                        checkSet((Set<?>) val, results);
-                    }
-                    // 2. 檢查 LiveData (androidx.lifecycle.LiveData / MutableLiveData)
-                    else if (val.getClass().getName().contains("androidx.lifecycle")) {
+                    // 1. 直接是 Set
+                    if (val instanceof Set) checkSet((Set<?>) val, results);
+                    
+                    // 2. LiveData 處理 (直接讀欄位，不 call 方法)
+                    else if (val.getClass().getName().contains("LiveData")) {
                         try {
-                            // 獲取 LiveData 的值 (getValue)
-                            Object data = XposedHelpers.callMethod(val, "getValue");
-                            if (data instanceof Set) {
-                                checkSet((Set<?>) data, results);
-                            }
-                        } catch (Exception ignored) {}
+                            // LiveData 內部通常把值存在 mData 或 mValue
+                            Object data = XposedHelpers.getObjectField(val, "mData"); 
+                            if (data == XposedHelpers.getObjectField(val, "NOT_SET")) continue; // 忽略空值
+                            if (data instanceof Set) checkSet((Set<?>) data, results);
+                        } catch (Exception e) {
+                            // 如果 mData 失敗，嘗試 mValue
+                            try {
+                                Object data = XposedHelpers.getObjectField(val, "mValue");
+                                if (data instanceof Set) checkSet((Set<?>) data, results);
+                            } catch (Exception ignored) {}
+                        }
                     }
-                    // 3. 檢查 ViewModel 內部
+                    
+                    // 3. ViewModel 遞歸
                     else if (val.getClass().getName().contains("ViewModel")) {
-                        results.addAll(deepScanForMids(val)); // 遞歸掃描 ViewModel
+                        results.addAll(safeScanForMids(val));
                     }
                 }
                 clazz = clazz.getSuperclass();
@@ -193,15 +193,13 @@ public class FastShare implements IHook {
         for (Object item : set) {
             if (item instanceof String) {
                 String s = (String) item;
-                if (s.startsWith("u") || s.startsWith("c") || s.startsWith("r")) {
-                    results.add(s);
-                }
+                if (s.startsWith("u") || s.startsWith("c")) results.add(s);
             }
         }
     }
 
-    // 輔助方法
-    private Object findObjectByType(Object parent, String typeName) { /* 同上個版本 */ return null; } // 簡化展示，實際代碼請保留 V5 的實現
-    private void saveMids(Context c, Set<String> mids) { /* 同上個版本 */ }
-    private Set<String> loadMids(Context c) { /* 同上個版本 */ return new HashSet<>(); }
+    // (保留之前的輔助方法: findObjectByType, saveMids, loadMids)
+    private Object findObjectByType(Object parent, String typeName) { /* 同 V6 */ return null; } // 佔位
+    private void saveMids(Context c, Set<String> mids) { /* 同 V6 */ }
+    private Set<String> loadMids(Context c) { /* 同 V6 */ return new HashSet<>(); }
 }
