@@ -261,4 +261,5 @@
     <string name="Talk_Auto_Back_up_Error_No_Access">Error</string>
     <string name="Talk_Auto_Back_up_Error_No_URI">Error</string>
     <string name="GetMidIdButton">GetMidId</string>
+    <string name="fast_share">快速轉傳與自動勾選</string>
 </resources>
