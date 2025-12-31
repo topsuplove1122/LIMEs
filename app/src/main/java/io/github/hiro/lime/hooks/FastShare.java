@@ -31,123 +31,139 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import io.github.hiro.lime.LimeOptions;
 
 public class FastShare implements IHook {
-    private static final String SHARE_PICKER = "jp.naver.line.android.activity.share.SharePickerActivity";
     private static final String FILE_NAME = "fast_share_configs.txt";
 
     @Override
     public void hook(LimeOptions options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
         if (!options.fastShare.checked) return;
 
-        // --- 功能 1: 修正長按選單按鈕 ---
+        // --- 功能 1: 在訊息旁邊生成按鈕 ---
         XposedHelpers.findAndHookMethod(ViewGroup.class, "onViewAdded", View.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 View addedView = (View) param.args[0];
                 int id = addedView.getId();
-                if (id == View.NO_ID) return;
+                if (id <= 0) return; // 解決 Resources$NotFoundException
 
-                String resName = addedView.getContext().getResources().getResourceEntryName(id);
+                try {
+                    String resName = addedView.getContext().getResources().getResourceEntryName(id);
+                    // 根據 Log，這是每則訊息的最外層容器
+                    if ("chat_ui_row_message_layout".equals(resName)) {
+                        injectSideShareButton(addedView);
+                    }
+                } catch (Exception ignored) {}
+            }
+        });
+
+        // --- 功能 2 & 3: 監控所有 Activity 來尋找分享介面 ---
+        XposedHelpers.findAndHookMethod(Activity.class, "onCreate", Bundle.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                Activity activity = (Activity) param.thisObject;
+                String className = activity.getClass().getName();
                 
-                // 根據 Log，選單最外層容器是這個
-                if ("chat_ui_message_context_menu_action_content_container".equals(resName)) {
-                    injectQuickShareButton(addedView);
+                // 只要 Activity 名字包含 Picker 或是 Share 且在 LINE 包名下
+                if (className.contains("jp.naver.line") && 
+                   (className.contains("Picker") || className.contains("Share"))) {
+                    injectSharePickerControls(activity);
                 }
             }
         });
-
-        // --- 功能 2 & 3: 針對 SharePickerActivity 注入 ---
-        XposedHelpers.findAndHookMethod(SHARE_PICKER, lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                injectShareControls((Activity) param.thisObject);
-            }
-        });
     }
 
-    private void injectQuickShareButton(View menuContainer) {
-        Context context = menuContainer.getContext();
-        ViewGroup parent = (ViewGroup) menuContainer;
+    private void injectSideShareButton(View messageRow) {
+        Context context = messageRow.getContext();
+        ViewGroup parent = (ViewGroup) messageRow;
 
-        // 防止在同一個菜單內重複添加
-        if (parent.findViewWithTag("lime_fast_share") != null) return;
+        if (parent.findViewWithTag("lime_side_share") != null) return;
 
         Button btn = new Button(context);
-        btn.setTag("lime_fast_share");
-        btn.setText("分享至其他聊天室");
-        btn.setBackgroundColor(Color.parseColor("#06C755")); // LINE 綠
+        btn.setTag("lime_side_share");
+        btn.setText("分享");
+        btn.setTextSize(10);
         btn.setTextColor(Color.WHITE);
-        btn.setTextSize(14);
-        btn.setAllCaps(false);
-
-        // 放置在菜單的最上方
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dpToPx(45, context));
-        lp.setMargins(dpToPx(10, context), dpToPx(5, context), dpToPx(10, context), dpToPx(5, context));
+        btn.setBackgroundColor(Color.parseColor("#8800B900")); // 半透明 LINE 綠
+        
+        // 將按鈕放在訊息容器的右下角
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dpToPx(40, context), dpToPx(30, context));
+        lp.gravity = Gravity.BOTTOM | Gravity.END;
+        lp.setMargins(0, 0, dpToPx(5, context), dpToPx(5, context));
 
         btn.setOnClickListener(v -> {
-            // 觸發 LINE 原生分享選擇器
-            Intent intent = new Intent();
-            intent.setClassName("jp.naver.line.android", SHARE_PICKER);
-            // 這裡模擬分享動作，通常 LINE 會檢查 Intent 是否有內容
-            intent.putExtra("android.intent.extra.TEXT", "FastShare Trigger"); 
-            v.getContext().startActivity(intent);
+            try {
+                // 使用更通用的 Intent，避免類名找不到導致閃退
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, "Quick Share");
+                intent.setPackage("jp.naver.line.android");
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            } catch (Exception e) {
+                XposedBridge.log("Lime: Share Intent Failed: " + e.getMessage());
+            }
         });
 
-        // 加入到菜單容器的第一個位置
-        parent.addView(btn, 0, lp);
+        parent.addView(btn, lp);
+        btn.bringToFront();
     }
 
-    private void injectShareControls(Activity activity) {
-        ViewGroup root = (ViewGroup) activity.getWindow().getDecorView();
-        if (root.findViewWithTag("lime_control_panel") != null) return;
+    private void injectSharePickerControls(Activity activity) {
+        ViewGroup decorView = (ViewGroup) activity.getWindow().getDecorView();
+        if (decorView.findViewWithTag("lime_picker_panel") != null) return;
 
         LinearLayout panel = new LinearLayout(activity);
-        panel.setTag("lime_control_panel");
+        panel.setTag("lime_picker_panel");
         panel.setOrientation(LinearLayout.HORIZONTAL);
-        panel.setBackgroundColor(Color.parseColor("#EEEEEE"));
-        panel.setPadding(10, 10, 10, 10);
+        panel.setBackgroundColor(Color.parseColor("#DDDDDD"));
 
-        Button save = new Button(activity); save.setText("設定預設");
-        Button auto = new Button(activity); auto.setText("一鍵勾選");
+        Button save = new Button(activity); save.setText("儲存預設");
+        Button auto = new Button(activity); auto.setText("自動勾選");
 
         save.setOnClickListener(v -> {
             try {
-                // 獲取當前選中的對象 (需分析具體混淆名，暫以選中的 UI 狀態模擬)
-                // 在 SharePickerActivity 中通常有個 viewModel 儲存選中狀態
-                Object viewModel = XposedHelpers.getObjectField(activity, "viewModel");
-                Set<String> selected = (Set<String>) XposedHelpers.getObjectField(viewModel, "selectedTargetMids");
-                if (selected != null && !selected.isEmpty()) {
-                    saveMids(activity, selected);
-                    Toast.makeText(activity, "已儲存預設分享對象", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(activity, "請先手動勾選欲儲存的聊天室", Toast.LENGTH_SHORT).show();
+                // 15.9.0 混淆適配：嘗試從常見變量名中抓取 ViewModel 或選中集
+                Object viewModel = findFieldInObject(activity, "viewModel");
+                if (viewModel != null) {
+                    Set<String> selected = (Set<String>) findFieldInObject(viewModel, "selectedTargetMids");
+                    if (selected != null && !selected.isEmpty()) {
+                        saveMids(activity, selected);
+                        Toast.makeText(activity, "已儲存 " + selected.size() + " 個對象", Toast.LENGTH_SHORT).show();
+                    }
                 }
             } catch (Exception e) {
-                Toast.makeText(activity, "儲存失敗：需適配混淆名", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "儲存功能需適配混淆名", Toast.LENGTH_SHORT).show();
             }
         });
 
         auto.setOnClickListener(v -> {
             try {
                 Set<String> saved = loadMids(activity);
-                Object viewModel = XposedHelpers.getObjectField(activity, "viewModel");
-                if (saved != null && viewModel != null) {
+                Object viewModel = findFieldInObject(activity, "viewModel");
+                if (viewModel != null && !saved.isEmpty()) {
                     for (String mid : saved) {
-                        // 調用 LINE 的選取方法 (通常是 a 或 selectTarget)
+                        // 嘗試執行選中動作 (15.9.0 可能的方法名)
                         XposedHelpers.callMethod(viewModel, "selectTarget", mid, true);
                     }
-                    Toast.makeText(activity, "自動勾選完成", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "嘗試自動勾選...", Toast.LENGTH_SHORT).show();
                 }
-            } catch (Exception e) {
-                XposedBridge.log("Lime: Auto select failed " + e.getMessage());
-            }
+            } catch (Exception ignored) {}
         });
 
-        panel.addView(save, new LinearLayout.LayoutParams(0, -2, 1));
-        panel.addView(auto, new LinearLayout.LayoutParams(0, -2, 1));
+        panel.addView(save, new LinearLayout.LayoutParams(0, -2, 1f));
+        panel.addView(auto, new LinearLayout.LayoutParams(0, -2, 1f));
 
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
-        root.addView(panel, lp);
+        decorView.addView(panel, lp);
         panel.bringToFront();
+    }
+
+    // 輔助方法：處理混淆後的欄位尋找
+    private Object findFieldInObject(Object obj, String fieldName) {
+        try { return XposedHelpers.getObjectField(obj, fieldName); } 
+        catch (Exception e) {
+            // 如果找不到，這裡可以擴充嘗試 a, b, c 等名字
+            return null;
+        }
     }
 
     private void saveMids(Context c, Set<String> mids) throws IOException {
