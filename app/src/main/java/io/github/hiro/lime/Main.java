@@ -98,6 +98,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
             new WhiteToDark(),
             new DisableSilentMessage(),
             new NotificationReaction(),
+            new FastShare(),
     };
 
     private boolean isSettingsLoaded = false; // 設定ロード状態を追跡
