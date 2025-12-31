@@ -38,6 +38,7 @@ public class FastShare implements IHook {
 
     @Override
     public void hook(LimeOptions options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        if (!options.fastShare.checked) return;
         
         // --- 功能 1: 訊息旁新增分享按鈕 (Hook 訊息長按選單顯示時) ---
         // 這裡我們 Hook 訊息長按彈出的選單或 ReactionList 所在的容器
