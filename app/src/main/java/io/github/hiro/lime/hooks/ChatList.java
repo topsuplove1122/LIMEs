@@ -1,6 +1,7 @@
 package io.github.hiro.lime.hooks;
 
 import android.app.Application;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -17,7 +18,6 @@ import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import io.github.hiro.lime.LimeOptions;
 
@@ -25,29 +25,50 @@ public class ChatList implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
 
+        // 【魔法護盾 1：攔截 Android 底層資料庫寫入】(防閃爍核心，永遠不怕 LINE 更新)
+        XposedBridge.hookAllMethods(SQLiteDatabase.class, "updateWithOnConflict", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                String table = (String) param.args[0];
+                // 只要是針對 chat 資料表的更新
+                if ("chat".equals(table)) {
+                    ContentValues values = (ContentValues) param.args[1];
+                    // 檢查 LINE 是否試圖把 is_archived 設為 0 (解除隱藏)
+                    if (values != null && values.containsKey("is_archived")) {
+                        Integer isArchived = values.getAsInteger("is_archived");
+                        if (isArchived != null && isArchived == 0) {
+                            String[] whereArgs = (String[]) param.args[3];
+                            if (whereArgs != null && whereArgs.length > 0) {
+                                String chatId = whereArgs[0]; // 通常第一個參數就是 chat_id
+                                Context context = android.app.AndroidAppHelper.currentApplication();
+                                // 如果這個聊天室在我們的小本本(黑名單)裡
+                                if (context != null && readChatIdsFromFile(context).contains(chatId)) {
+                                    // 🛑 霸王硬上弓：在寫入資料庫的前一刻，強制把它改回 1！
+                                    values.put("is_archived", 1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 【魔法護盾 2：攔截你的手動操作與網路同步兜底】
         XposedBridge.hookAllMethods(Application.class, "onCreate", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 Application appContext = (Application) param.thisObject;
+                if (appContext == null) return;
 
-                if (appContext == null) {
-                    return;
-                }
-
-                // 取得 LINE 自身的資料庫
                 File dbFile = appContext.getDatabasePath("naver_line");
-
                 if (dbFile.exists()) {
                     SQLiteDatabase.OpenParams.Builder builder = null;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                         builder = new SQLiteDatabase.OpenParams.Builder();
                         builder.addOpenFlags(SQLiteDatabase.OPEN_READWRITE);
                         SQLiteDatabase.OpenParams dbParams = builder.build();
-
                         SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile, dbParams);
-                        
-                        // 啟動攔截器，將 appContext 傳入取代原本會崩潰的 moduleContext
-                        // hookSAMethod(loadPackageParam, db, appContext);
+
                         hookMessageDeletion(loadPackageParam, appContext, db);
                     }
                 }
@@ -56,8 +77,7 @@ public class ChatList implements IHook {
     }
 
     private void hookMessageDeletion(XC_LoadPackage.LoadPackageParam loadPackageParam, Context context, SQLiteDatabase db) throws ClassNotFoundException {
-        
-        // 1. 攔截你「手動操作」隱藏/解除隱藏 (攔截發送給伺服器的 REQUEST)
+        // 1. 攔截手動隱藏/解除隱藏 (寫入或刪除小本本)
         XposedBridge.hookAllMethods(
                 loadPackageParam.classLoader.loadClass(Constants.REQUEST_HOOK.className),
                 Constants.REQUEST_HOOK.methodName,
@@ -69,7 +89,7 @@ public class ChatList implements IHook {
                             String talkId = extractTalkId(paramValue);
                             if (talkId != null) {
                                 saveTalkIdToFile(talkId, context);
-                                updateArchivedChatsFromFile(db, context);
+                                updateIsArchived(db, talkId); // 立即生效
                             }
                         }
                         if (paramValue.contains("hidden:false")) {
@@ -81,37 +101,19 @@ public class ChatList implements IHook {
                     }
                 });
 
-        // 2. 【全新加入的無情守衛】攔截「接收新訊息」 (攔截伺服器傳來的 RESPONSE)
+        // 2. 網路同步後兜底（防漏網之魚）
         XposedBridge.hookAllMethods(
                 loadPackageParam.classLoader.loadClass(Constants.RESPONSE_HOOK.className),
                 Constants.RESPONSE_HOOK.methodName,
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
-                        // 每當有新訊息進來，LINE 原廠機制會偷偷把 is_archived 改成 0 讓它彈出來。
-                        // 我們在這裡攔截它，每次同步完，就強迫把名單內的聊天室再次死死地釘在 1 (隱藏)！
                         updateArchivedChatsFromFile(db, context);
                     }
                 });
     }
 
-    // private void hookSAMethod(XC_LoadPackage.LoadPackageParam loadPackageParam, SQLiteDatabase db, Context appContext) {
-    //     Class<?> targetClass = XposedHelpers.findClass(Constants.Archive.className, loadPackageParam.classLoader);
-
-    //     XposedBridge.hookAllMethods(targetClass, Constants.Archive.methodName, new XC_MethodHook() {
-    //         @Override
-    //         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-    //             // 強制執行隱藏邏輯，移除 PinList 廢話碼
-    //             List<String> chatIds = readChatIdsFromFile(appContext);
-    //             for (String chatId : chatIds) {
-    //                 if (!chatId.isEmpty()) {
-    //                     updateIsArchived(db, chatId);
-    //                 }
-    //             }
-    //         }
-    //     });
-    // }
-
+    // --- 下面是純粹的檔案與資料庫讀寫工具，無需更動 ---
     private void saveTalkIdToFile(String talkId, Context context) {
         File dir = context.getFilesDir();
         if (!dir.exists()) dir.mkdirs();
@@ -198,14 +200,6 @@ public class ChatList implements IHook {
             if (endIndex != -1) talkId = paramValue.substring(chatMidStartIndex, endIndex).trim();
         }
         return talkId;
-    }
-
-    private String queryDatabase(SQLiteDatabase db, String query, String... selectionArgs) {
-        if (db == null) return null;
-        try (Cursor cursor = db.rawQuery(query, selectionArgs)) {
-            if (cursor.moveToFirst()) return cursor.getString(0);
-        } catch (Exception ignored) {}
-        return null;
     }
 
     private void updateDatabase(SQLiteDatabase db, String query, Object... bindArgs) {
