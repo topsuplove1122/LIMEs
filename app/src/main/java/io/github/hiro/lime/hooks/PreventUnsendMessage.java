@@ -12,7 +12,7 @@ import io.github.hiro.lime.LimeOptions;
 public class PreventUnsendMessage implements IHook {
     @Override
     public void hook(LimeOptions limeOptions, XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
-        if (!limeOptions.preventUnsendMessage.checked) return;
+        // if (!limeOptions.preventUnsendMessage.checked) return;
 
         XposedBridge.hookAllMethods(
                 loadPackageParam.classLoader.loadClass(Constants.RESPONSE_HOOK.className),
