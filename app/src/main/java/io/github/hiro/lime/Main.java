@@ -135,21 +135,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
             return;
         }
 
-        try {
-            String backupUri = loadBackupUri(mContext);
-            if (backupUri != null) {
-                Uri treeUri = Uri.parse(backupUri);
-                DocumentPreferences docPrefs = new DocumentPreferences(mContext, treeUri);
-                docPrefs.loadSettings(limeOptions);
-                XposedBridge.log("Lime: Settings loaded from DocumentPreferences");
-            } else {
-                setupUriConfiguration(lpparam);
-                XposedBridge.log("Lime: Settings URI not configured");
-            }
-        } catch (Exception e) {
-            XposedBridge.log("Lime: Error loading settings: " + e.getMessage());
-            setupUriConfiguration(lpparam);
-        }
+        
 
                 Constants.initializeHooks(lpparam);
         for (IHook hook : hooks) {
