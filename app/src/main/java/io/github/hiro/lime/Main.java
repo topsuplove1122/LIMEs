@@ -151,10 +151,16 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
             setupUriConfiguration(lpparam);
         }
 
-        Constants.initializeHooks(lpparam);
+                Constants.initializeHooks(lpparam);
         for (IHook hook : hooks) {
-            hook.hook(limeOptions, lpparam);
+            try {
+                hook.hook(limeOptions, lpparam);
+            } catch (Throwable t) {
+                // 如果某個功能崩潰了，把它記錄下來，但不要中斷程式！繼續執行下一個功能！
+                XposedBridge.log("Lime Hook Error in " + hook.getClass().getSimpleName() + ": " + t.getMessage());
+            }
         }
+
     }
 
     private Button createConfigButton(Context context, XC_MethodHook.MethodHookParam param) {
