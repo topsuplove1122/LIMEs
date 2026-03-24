@@ -56,7 +56,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
     private static Context context; // Static context to be shared
     private static Context mContext; // staticに変更して共有
     static final IHook[] hooks = {
-            new InstallModule(),
+            // new InstallModule(),
             // new OutputResponse(),
             // new ModifyRequest(),
             // new CheckHookTargetVersion(),
