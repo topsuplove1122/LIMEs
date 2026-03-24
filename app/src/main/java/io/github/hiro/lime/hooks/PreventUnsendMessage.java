@@ -47,8 +47,11 @@ public class PreventUnsendMessage implements IHook {
                                     }
                                 }
                             }
-                        } catch (Exception ignored) {
+                                                } catch (Exception e) {
+                            // 逼它把詳細的錯誤原因印到 Log 裡！
+                            XposedBridge.log("Lime PreventUnsend Error: " + android.util.Log.getStackTraceString(e));
                         }
+
                     }
                 }
         );
