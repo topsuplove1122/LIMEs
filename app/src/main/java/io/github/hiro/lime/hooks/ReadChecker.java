@@ -147,28 +147,38 @@ public class ReadChecker implements IHook {
     }
 
     // ==========================================
-    // 引擎二：可隨意拖曳的非同步 UI 按鈕
+    // 引擎二：全局記憶位置的拖曳按鈕
     // ==========================================
     private void addTopButton(Activity activity) {
-        Button btn = new Button(activity);
-        // 給按鈕一個專屬 ID，確保畫面上只有一個
         final int BUTTON_ID = 95279527;
-        btn.setId(BUTTON_ID);
+        ViewGroup layout = activity.findViewById(android.R.id.content);
         
-        btn.setText("👀");
-        btn.setBackgroundColor(Color.parseColor("#AA000000")); // 半透明黑
-        btn.setTextColor(Color.WHITE);
+        // 確保畫面準備好，且還沒有重複加過按鈕
+        if (layout == null || activity.findViewById(BUTTON_ID) != null) {
+            return;
+        }
+
+        Button btn = new Button(activity);
+        btn.setId(BUTTON_ID);
+        btn.setText("👀 誰已讀");
+        btn.setBackgroundColor(android.graphics.Color.parseColor("#AA000000")); // 半透明黑
+        btn.setTextColor(android.graphics.Color.WHITE);
         btn.setTextSize(12);
+
+        // 💥 記憶魔法 1：讀取上次儲存的座標
+        android.content.SharedPreferences prefs = activity.getSharedPreferences("LimeReadCheckerPrefs", android.content.Context.MODE_PRIVATE);
+        // 如果是第一次用，預設值給 150 和 180
+        int savedX = prefs.getInt("btn_x", 150);
+        int savedY = prefs.getInt("btn_y", 180);
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
         );
-        // 初始位置：左上方
-        params.setMargins(150, 180, 0, 0);
+        params.setMargins(savedX, savedY, 0, 0); // 套用記憶的座標
         btn.setLayoutParams(params);
 
-        // 💥 魔法一：設定點擊事件 (查資料庫)
+        // 點擊事件：查資料庫 (維持不變)
         btn.setOnClickListener(v -> {
             if (currentChatId == null || db_line == null || db_contact == null) return;
             
@@ -193,14 +203,13 @@ public class ReadChecker implements IHook {
             }).start();
         });
 
-        // 💥 魔法二：設定觸控事件 (處理隨意拖曳)
+        // 觸控事件：處理隨意拖曳並儲存位置
         btn.setOnTouchListener(new android.view.View.OnTouchListener() {
             private int initialX;
             private int initialY;
             private float initialTouchX;
             private float initialTouchY;
             private boolean isMoved = false;
-            // 設定移動的容忍值，超過 10 像素才算是「拖曳」，否則是「點擊」
             private static final int CLICK_DRAG_TOLERANCE = 10; 
 
             @Override
@@ -209,7 +218,6 @@ public class ReadChecker implements IHook {
 
                 switch (event.getAction()) {
                     case android.view.MotionEvent.ACTION_DOWN:
-                        // 手指按下的瞬間，記錄現在的位置
                         initialX = layoutParams.leftMargin;
                         initialY = layoutParams.topMargin;
                         initialTouchX = event.getRawX();
@@ -218,7 +226,6 @@ public class ReadChecker implements IHook {
                         return true;
 
                     case android.view.MotionEvent.ACTION_MOVE:
-                        // 手指移動時，計算移動距離
                         int dx = (int) (event.getRawX() - initialTouchX);
                         int dy = (int) (event.getRawY() - initialTouchY);
 
@@ -226,7 +233,6 @@ public class ReadChecker implements IHook {
                             isMoved = true;
                         }
 
-                        // 實時更新按鈕的位置
                         layoutParams.leftMargin = initialX + dx;
                         layoutParams.topMargin = initialY + dy;
                         layoutParams.rightMargin = 0;
@@ -235,9 +241,14 @@ public class ReadChecker implements IHook {
                         return true;
 
                     case android.view.MotionEvent.ACTION_UP:
-                        // 手指放開時，如果沒有移動超過容忍值，就當作是「點擊」
                         if (!isMoved) {
-                            v.performClick(); // 觸發上面的 setOnClickListener
+                            v.performClick(); // 沒有移動，當作點擊
+                        } else {
+                            // 💥 記憶魔法 2：拖曳結束，把最新的座標寫進系統儲存！
+                            prefs.edit()
+                                 .putInt("btn_x", layoutParams.leftMargin)
+                                 .putInt("btn_y", layoutParams.topMargin)
+                                 .apply();
                         }
                         return true;
                 }
@@ -245,11 +256,7 @@ public class ReadChecker implements IHook {
             }
         });
 
-        // 將按鈕加入畫面
-        ViewGroup layout = activity.findViewById(android.R.id.content);
-        if (layout != null && activity.findViewById(BUTTON_ID) == null) {
-            layout.addView(btn);
-        }
+        layout.addView(btn);
     }
 
     // ==========================================
