@@ -56,6 +56,8 @@ public class ChatList implements IHook {
     }
 
     private void hookMessageDeletion(XC_LoadPackage.LoadPackageParam loadPackageParam, Context context, SQLiteDatabase db) throws ClassNotFoundException {
+        
+        // 1. 攔截你「手動操作」隱藏/解除隱藏 (攔截發送給伺服器的 REQUEST)
         XposedBridge.hookAllMethods(
                 loadPackageParam.classLoader.loadClass(Constants.REQUEST_HOOK.className),
                 Constants.REQUEST_HOOK.methodName,
@@ -74,9 +76,21 @@ public class ChatList implements IHook {
                             String talkId = extractTalkId(paramValue);
                             if (talkId != null) {
                                 deleteTalkIdFromFile(talkId, context);
-                                updateArchivedChatsFromFile(db, context);
                             }
                         }
+                    }
+                });
+
+        // 2. 【全新加入的無情守衛】攔截「接收新訊息」 (攔截伺服器傳來的 RESPONSE)
+        XposedBridge.hookAllMethods(
+                loadPackageParam.classLoader.loadClass(Constants.RESPONSE_HOOK.className),
+                Constants.RESPONSE_HOOK.methodName,
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        // 每當有新訊息進來，LINE 原廠機制會偷偷把 is_archived 改成 0 讓它彈出來。
+                        // 我們在這裡攔截它，每次同步完，就強迫把名單內的聊天室再次死死地釘在 1 (隱藏)！
+                        updateArchivedChatsFromFile(db, context);
                     }
                 });
     }
