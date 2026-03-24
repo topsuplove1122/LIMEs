@@ -877,8 +877,8 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
 
         }
 
-        resparam.res.setReplacement(Constants.PACKAGE_NAME, "dimen", "chat_ui_photobooth_floating_btn_height", xModuleResources.fwd(R.dimen.main_bnb_button_width));
-        resparam.res.setReplacement(Constants.PACKAGE_NAME, "dimen", "chat_ui_photobooth_top_margin", xModuleResources.fwd(R.dimen.main_bnb_button_width));
+        // resparam.res.setReplacement(Constants.PACKAGE_NAME, "dimen", "chat_ui_photobooth_floating_btn_height", xModuleResources.fwd(R.dimen.main_bnb_button_width));
+        // resparam.res.setReplacement(Constants.PACKAGE_NAME, "dimen", "chat_ui_photobooth_top_margin", xModuleResources.fwd(R.dimen.main_bnb_button_width));
 
         if (limeOptions.removeServiceLabels.checked) {
             resparam.res.setReplacement(Constants.PACKAGE_NAME, "dimen", "home_tab_v3_service_icon_size", xModuleResources.fwd(R.dimen.home_tab_v3_service_icon_size));
