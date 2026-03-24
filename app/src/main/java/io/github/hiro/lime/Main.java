@@ -79,7 +79,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
             new ChatList(),
             new UnsentRec(),
             // new RingTone(),
-            // new ReadChecker(),
+            new ReadChecker(),
             // new DarkColor(),
             // new KeepUnreadLSpatch(),
             // new AutomaticBackup(),
