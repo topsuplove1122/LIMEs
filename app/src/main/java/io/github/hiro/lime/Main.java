@@ -864,7 +864,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
         if (limeOptions.removeNaviOpenchat.checked) {
             resparam.res.setReplacement(Constants.PACKAGE_NAME, "drawable", "navi_top_openchat", xModuleResources.fwd(R.drawable.empty_drawable));
         }
-        resparam.res.setReplacement(Constants.PACKAGE_NAME, "drawable", "freecall_bottom_photobooth", xModuleResources.fwd(R.drawable.empty_drawable));
+        // resparam.res.setReplacement(Constants.PACKAGE_NAME, "drawable", "freecall_bottom_photobooth", xModuleResources.fwd(R.drawable.empty_drawable));
         if (limeOptions.RemoveVoiceRecord.checked) {
             resparam.res.setReplacement(Constants.PACKAGE_NAME, "drawable", "chat_ui_input_ic_voice_normal", xModuleResources.fwd(R.drawable.empty_drawable));
             resparam.res.setReplacement(Constants.PACKAGE_NAME, "drawable", "chat_ui_input_ic_voice_pressed", xModuleResources.fwd(R.drawable.empty_drawable));
