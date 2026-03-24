@@ -47,7 +47,7 @@ public class ChatList implements IHook {
                         SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile, dbParams);
                         
                         // 啟動攔截器，將 appContext 傳入取代原本會崩潰的 moduleContext
-                        hookSAMethod(loadPackageParam, db, appContext);
+                        // hookSAMethod(loadPackageParam, db, appContext);
                         hookMessageDeletion(loadPackageParam, appContext, db);
                     }
                 }
@@ -81,22 +81,22 @@ public class ChatList implements IHook {
                 });
     }
 
-    private void hookSAMethod(XC_LoadPackage.LoadPackageParam loadPackageParam, SQLiteDatabase db, Context appContext) {
-        Class<?> targetClass = XposedHelpers.findClass(Constants.Archive.className, loadPackageParam.classLoader);
+    // private void hookSAMethod(XC_LoadPackage.LoadPackageParam loadPackageParam, SQLiteDatabase db, Context appContext) {
+    //     Class<?> targetClass = XposedHelpers.findClass(Constants.Archive.className, loadPackageParam.classLoader);
 
-        XposedBridge.hookAllMethods(targetClass, Constants.Archive.methodName, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                // 強制執行隱藏邏輯，移除 PinList 廢話碼
-                List<String> chatIds = readChatIdsFromFile(appContext);
-                for (String chatId : chatIds) {
-                    if (!chatId.isEmpty()) {
-                        updateIsArchived(db, chatId);
-                    }
-                }
-            }
-        });
-    }
+    //     XposedBridge.hookAllMethods(targetClass, Constants.Archive.methodName, new XC_MethodHook() {
+    //         @Override
+    //         protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+    //             // 強制執行隱藏邏輯，移除 PinList 廢話碼
+    //             List<String> chatIds = readChatIdsFromFile(appContext);
+    //             for (String chatId : chatIds) {
+    //                 if (!chatId.isEmpty()) {
+    //                     updateIsArchived(db, chatId);
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
 
     private void saveTalkIdToFile(String talkId, Context context) {
         File dir = context.getFilesDir();
