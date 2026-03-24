@@ -160,7 +160,7 @@ public class ReadChecker implements IHook {
 
         Button btn = new Button(activity);
         btn.setId(BUTTON_ID);
-        btn.setText("👀 誰已讀");
+        btn.setText("👀");
         btn.setBackgroundColor(android.graphics.Color.parseColor("#AA000000")); // 半透明黑
         btn.setTextColor(android.graphics.Color.WHITE);
         btn.setTextSize(12);
