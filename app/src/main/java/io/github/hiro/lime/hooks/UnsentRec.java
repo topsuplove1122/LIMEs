@@ -292,7 +292,7 @@ public class UnsentRec implements IHook {
 
     private void updateMessageAsCanceled(SQLiteDatabase db1, String serverId, Context context, Context moduleContext) {
         // canceledContent をファイルから取得
-        String canceledContent = getCanceledContentFromFile(context, moduleContext);
+        String canceledContent = "🚫 對方收回訊息";
         // 既存のメッセージを取得
         Cursor cursor = db1.rawQuery("SELECT * FROM chat_history WHERE server_id=?", new String[]{serverId});
 
