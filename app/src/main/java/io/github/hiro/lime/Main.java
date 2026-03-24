@@ -71,7 +71,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
             // new RemoveReplyMute(),
             // new RedirectWebView(),
             // new PreventMarkAsRead(),
-            // new PreventUnsendMessage(),
+            new PreventUnsendMessage(),
             // new SendMuteMessage(),
             // new KeepUnread(),
             // new ModifyResponse(),
