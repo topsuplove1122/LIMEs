@@ -147,12 +147,16 @@ public class ReadChecker implements IHook {
     }
 
     // ==========================================
-    // 引擎二：非同步 UI 按鈕 (絕對不卡頓)
+    // 引擎二：可隨意拖曳的非同步 UI 按鈕
     // ==========================================
     private void addTopButton(Activity activity) {
         Button btn = new Button(activity);
-        btn.setText("👀 誰已讀");
-        btn.setBackgroundColor(Color.parseColor("#88000000")); // 半透明黑色背景
+        // 給按鈕一個專屬 ID，確保畫面上只有一個
+        final int BUTTON_ID = 95279527;
+        btn.setId(BUTTON_ID);
+        
+        btn.setText("👀");
+        btn.setBackgroundColor(Color.parseColor("#AA000000")); // 半透明黑
         btn.setTextColor(Color.WHITE);
         btn.setTextSize(12);
 
@@ -160,20 +164,18 @@ public class ReadChecker implements IHook {
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(150, 150, 0, 0); // 放在左上方偏下，避開返回鍵
+        // 初始位置：左上方
+        params.setMargins(150, 180, 0, 0);
         btn.setLayoutParams(params);
 
+        // 💥 魔法一：設定點擊事件 (查資料庫)
         btn.setOnClickListener(v -> {
-            if (db_line == null || db_contact == null) return;
+            if (currentChatId == null || db_line == null || db_contact == null) return;
             
-            // 點擊瞬間彈出提示，不卡畫面
             Toast.makeText(activity, "資料撈取中，請稍候...", Toast.LENGTH_SHORT).show();
 
-            // 💥 核心解法：把所有資料庫操作丟進背景執行緒！
             new Thread(() -> {
                 String resultText = buildReadDataString();
-                
-                // 撈完資料後，切換回主畫面顯示對話框
                 activity.runOnUiThread(() -> {
                     TextView textView = new TextView(activity);
                     textView.setText(resultText);
@@ -183,7 +185,7 @@ public class ReadChecker implements IHook {
                     scrollView.addView(textView);
 
                     new AlertDialog.Builder(activity)
-                            .setTitle("已讀名單 (最近 15 則)")
+                            .setTitle("已讀名單 (最近 15 則文字)")
                             .setView(scrollView)
                             .setPositiveButton("關閉", null)
                             .show();
@@ -191,8 +193,63 @@ public class ReadChecker implements IHook {
             }).start();
         });
 
+        // 💥 魔法二：設定觸控事件 (處理隨意拖曳)
+        btn.setOnTouchListener(new android.view.View.OnTouchListener() {
+            private int initialX;
+            private int initialY;
+            private float initialTouchX;
+            private float initialTouchY;
+            private boolean isMoved = false;
+            // 設定移動的容忍值，超過 10 像素才算是「拖曳」，否則是「點擊」
+            private static final int CLICK_DRAG_TOLERANCE = 10; 
+
+            @Override
+            public boolean onTouch(android.view.View v, android.view.MotionEvent event) {
+                FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) v.getLayoutParams();
+
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        // 手指按下的瞬間，記錄現在的位置
+                        initialX = layoutParams.leftMargin;
+                        initialY = layoutParams.topMargin;
+                        initialTouchX = event.getRawX();
+                        initialTouchY = event.getRawY();
+                        isMoved = false;
+                        return true;
+
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        // 手指移動時，計算移動距離
+                        int dx = (int) (event.getRawX() - initialTouchX);
+                        int dy = (int) (event.getRawY() - initialTouchY);
+
+                        if (Math.abs(dx) > CLICK_DRAG_TOLERANCE || Math.abs(dy) > CLICK_DRAG_TOLERANCE) {
+                            isMoved = true;
+                        }
+
+                        // 實時更新按鈕的位置
+                        layoutParams.leftMargin = initialX + dx;
+                        layoutParams.topMargin = initialY + dy;
+                        layoutParams.rightMargin = 0;
+                        layoutParams.bottomMargin = 0;
+                        v.setLayoutParams(layoutParams);
+                        return true;
+
+                    case android.view.MotionEvent.ACTION_UP:
+                        // 手指放開時，如果沒有移動超過容忍值，就當作是「點擊」
+                        if (!isMoved) {
+                            v.performClick(); // 觸發上面的 setOnClickListener
+                        }
+                        return true;
+                }
+                return false;
+            }
+        });
+
+        // 將按鈕加入畫面
         ViewGroup layout = activity.findViewById(android.R.id.content);
-        layout.addView(btn);
+        if (layout != null && activity.findViewById(BUTTON_ID) == null) {
+            layout.addView(btn);
+        }
     }
 
     // ==========================================
