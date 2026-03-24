@@ -23,8 +23,9 @@ public class Constants {
     //ChatListViewModel
     static  HookTarget Archive = new HookTarget("LB.W", "invokeSuspend");
 
-    static  HookTarget REQUEST_HOOK = new HookTarget("org.apache.thrift.n", "b");
-    static  HookTarget RESPONSE_HOOK = new HookTarget("org.apache.thrift.n", "a");
+        // 這是你親手找出來的最新入口！
+    static  HookTarget REQUEST_HOOK = new HookTarget("org.apache.thrift.o", "b");
+    static  HookTarget RESPONSE_HOOK = new HookTarget("org.apache.thrift.o", "a");
     //BackEventCompat
     static HookTarget  RemoveVoiceRecord_Hook_a = new HookTarget("q.j", "run");
 
