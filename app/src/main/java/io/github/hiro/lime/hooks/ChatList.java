@@ -85,7 +85,7 @@ public class ChatList implements IHook {
     }
 
     private void hookMessageDeletion(XC_LoadPackage.LoadPackageParam loadPackageParam, Context context, SQLiteDatabase db, Context moduleContext) throws ClassNotFoundException {
-        if (!limeOptions.Archived.checked) return;
+        // if (!limeOptions.Archived.checked) return;
 
         XposedBridge.hookAllMethods(
                 loadPackageParam.classLoader.loadClass(Constants.REQUEST_HOOK.className),
