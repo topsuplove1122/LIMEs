@@ -94,7 +94,7 @@ public class ReadChecker implements IHook {
     }
 
     // ==========================================
-    // 引擎一：攔截封包，精準切割並無感更新水位線
+    // 引擎一：攔截封包，精準反查並更新水位線
     // ==========================================
     private void hookNetwork(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         try {
@@ -109,23 +109,34 @@ public class ReadChecker implements IHook {
                             // 只要封包裡有「已讀」事件
                             if (paramValue.contains("type:NOTIFIED_READ_MESSAGE")) {
                                 
-                                // 💥 關鍵修復：LINE 會把多個操作綁在一起，我們必須先切開它們！
+                                // LINE 會把多個操作綁在一起，先切開它們
                                 String[] operations = paramValue.split("Operation\\(");
                                 
                                 for (String op : operations) {
-                                    // 確保我們只處理「已讀」的那個區塊
                                     if (op.contains("type:NOTIFIED_READ_MESSAGE")) {
-                                        String chatId = extractParam(op, "param1:");
                                         String readerMid = extractParam(op, "param2:");
                                         String msgIdStr = extractParam(op, "param3:");
 
-                                        if (chatId != null && readerMid != null && msgIdStr != null && db_line != null) {
+                                        if (readerMid != null && msgIdStr != null && db_line != null) {
                                             try {
                                                 long msgId = Long.parseLong(msgIdStr);
-                                                // 寫入底層進度表
-                                                db_line.execSQL("INSERT OR REPLACE INTO lime_read_watermarks (chat_id, reader_mid, max_msg_id) VALUES (?, ?, ?)",
-                                                        new Object[]{chatId, readerMid, msgId});
-                                            } catch (Exception e) {}
+                                                
+                                                // 💥 核心修正：拿訊息 ID 去反查真正的 Chat ID！
+                                                Cursor c = db_line.rawQuery("SELECT chat_id FROM chat_history WHERE server_id = ?", new String[]{msgIdStr});
+                                                if (c.moveToFirst()) {
+                                                    String exactChatId = c.getString(0);
+                                                    
+                                                    // 寫入底層進度表
+                                                    db_line.execSQL("INSERT OR REPLACE INTO lime_read_watermarks (chat_id, reader_mid, max_msg_id) VALUES (?, ?, ?)",
+                                                            new Object[]{exactChatId, readerMid, msgId});
+                                                    
+                                                    XposedBridge.log("Lime ReadChecker: Captured Read! Chat=" + exactChatId + ", Reader=" + readerMid + ", MsgID=" + msgId);
+                                                }
+                                                c.close();
+                                                
+                                            } catch (Exception e) {
+                                                XposedBridge.log("Lime ReadChecker Error: " + e.getMessage());
+                                            }
                                         }
                                     }
                                 }
