@@ -267,13 +267,14 @@ public class ReadChecker implements IHook {
     }
 
     private String extractParam(String operation, String prefix) {
-        int start = operation.indexOf(prefix);
-        if (start != -1) {
-            start += prefix.length();
-            int end = operation.indexOf(",", start);
-            if (end == -1) end = operation.indexOf(")", start);
-            if (end != -1) return operation.substring(start, end).trim();
-        }
+        try {
+            // 💥 完美防護：只抓取連續的英文與數字，自動把後面的 )] 或逗號全部過濾掉！
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(prefix + "([a-zA-Z0-9]+)");
+            java.util.regex.Matcher matcher = pattern.matcher(operation);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        } catch (Exception e) {}
         return null;
     }
 
