@@ -94,7 +94,7 @@ public class ReadChecker implements IHook {
     }
 
     // ==========================================
-    // 引擎一：攔截封包，無感更新水位線
+    // 引擎一：攔截封包，精準切割並無感更新水位線
     // ==========================================
     private void hookNetwork(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         try {
@@ -105,18 +105,29 @@ public class ReadChecker implements IHook {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
                             String paramValue = param.args[1].toString();
+                            
+                            // 只要封包裡有「已讀」事件
                             if (paramValue.contains("type:NOTIFIED_READ_MESSAGE")) {
-                                String chatId = extractParam(paramValue, "param1:");
-                                String readerMid = extractParam(paramValue, "param2:");
-                                String msgIdStr = extractParam(paramValue, "param3:");
+                                
+                                // 💥 關鍵修復：LINE 會把多個操作綁在一起，我們必須先切開它們！
+                                String[] operations = paramValue.split("Operation\\(");
+                                
+                                for (String op : operations) {
+                                    // 確保我們只處理「已讀」的那個區塊
+                                    if (op.contains("type:NOTIFIED_READ_MESSAGE")) {
+                                        String chatId = extractParam(op, "param1:");
+                                        String readerMid = extractParam(op, "param2:");
+                                        String msgIdStr = extractParam(op, "param3:");
 
-                                if (chatId != null && readerMid != null && msgIdStr != null && db_line != null) {
-                                    try {
-                                        long msgId = Long.parseLong(msgIdStr);
-                                        // 只更新最新進度，絕不重複安插垃圾資料
-                                        db_line.execSQL("INSERT OR REPLACE INTO lime_read_watermarks (chat_id, reader_mid, max_msg_id) VALUES (?, ?, ?)",
-                                                new Object[]{chatId, readerMid, msgId});
-                                    } catch (Exception e) {}
+                                        if (chatId != null && readerMid != null && msgIdStr != null && db_line != null) {
+                                            try {
+                                                long msgId = Long.parseLong(msgIdStr);
+                                                // 寫入底層進度表
+                                                db_line.execSQL("INSERT OR REPLACE INTO lime_read_watermarks (chat_id, reader_mid, max_msg_id) VALUES (?, ?, ?)",
+                                                        new Object[]{chatId, readerMid, msgId});
+                                            } catch (Exception e) {}
+                                        }
+                                    }
                                 }
                             }
                         }
