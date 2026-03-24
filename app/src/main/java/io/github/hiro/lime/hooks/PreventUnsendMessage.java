@@ -18,10 +18,16 @@ public class PreventUnsendMessage implements IHook {
                 loadPackageParam.classLoader.loadClass(Constants.RESPONSE_HOOK.className),
                 Constants.RESPONSE_HOOK.methodName,
                 new XC_MethodHook() {
-                    @Override
+                                        @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        // 🟢 裝上監視器：只要有網路封包進來，就把第一個參數印出來看看！
+                        XposedBridge.log("Lime Probe: Hook triggered! arg[0] = " + param.args[0]);
+
                         if (!"sync".equals(param.args[0].toString())) return;
+                        
                         try {
+                        // ... 後面維持原樣 ...
+
                             Object wrapper = param.args[1].getClass().getDeclaredField("a").get(param.args[1]);
                             Field operationResponseField = wrapper.getClass().getSuperclass().getDeclaredField("value_");
                             operationResponseField.setAccessible(true);
