@@ -26,10 +26,8 @@ public class LimeModule extends XposedModule {
 
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            
             hook(attachBaseContextMethod, new XposedInterface.Hooker() {
                 @Override
-                // ⚠️ 注意：必須回傳 Object，不能是 void！
                 public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     if (mContext == null) {
                         mContext = (Context) callback.getArgs()[0];
