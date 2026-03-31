@@ -12,8 +12,6 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name">
 
-        
-
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
@@ -23,19 +21,8 @@
             android:value="@string/xposed_desc" />
 
         <meta-data
-            android:name="xposedapi"
-            android:value="101" />
-
-        <meta-data
-            android:name="xposedmoduleentry"
-            android:value="io.github.hiro.lime.LimeModule" /> 
-
-        <meta-data
-            android:name="xposedsharedprefs"
-            android:value="true" />
-        <meta-data
-            android:name="xposedscope"
-            android:value="jp.naver.line.android" />
+            android:name="xposedminversion"
+            android:value="93" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
