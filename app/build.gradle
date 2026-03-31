@@ -7,6 +7,9 @@ android {
     compileSdk 35
 
     defaultConfig {
+        // 🚀 修正 1：加上明確的 applicationId，確保底層查戶口不會查錯
+        applicationId "io.github.hiro.lime"
+        
         minSdk 22
         targetSdk 35
         versionCode 116160
@@ -17,7 +20,6 @@ android {
         buildConfigField 'String', 'HOOK_TARGET_VERSION', '"141910383"'
     }
 
-    // 【修正 1】這一段必須獨立出來，不能寫在 defaultConfig 裡面
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -50,7 +52,6 @@ android {
         }
     }
 
-    // 【修正 2】物理防禦：如果還有舊的 Xposed 檔案沒刪掉，這段代碼會強行讓編譯器跳過它們
     sourceSets {
         main {
             java {
@@ -63,14 +64,17 @@ android {
                 include '**/hooks/UnsentRec.java'
                 include '**/hooks/PreventUnsendMessage.java'
                 include '**/hooks/ReadChecker.java'
-                // ❌ 暫時移除 MainActivity，這樣就不會報找不到 Preferences 的錯了
+            }
+            // 🚀 修正 2：強制打包 resources，這是 LibXposed API 101 的生命線！
+            resources {
+                srcDirs = ['src/main/resources']
             }
         }
     }
 
     lint {
         checkReleaseBuilds false
-        abortOnError false // 即使有警告也強行繼續
+        abortOnError false
     }
 
     buildFeatures {
