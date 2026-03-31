@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import java.io.File;
 import java.lang.reflect.Method;
 
-import io.github.hiro.lime.Constants;
+import io.github.hiro.lime.hooks.Constants;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
 import io.github.libxposed.api.XposedInterface;
