@@ -107,7 +107,7 @@ public class Constants {
             PhotoSave2 = new HookTarget("XQ.g", "");
             PhotoSave3 = new HookTarget("lm.K$b", "");
         } else if (isVersionInRange(versionName, "15.4.0", "15.4.1")) {
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.4.0 Patched ");
+            module.log(2, "LIMEs", "15.4.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("Rj1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("jS0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Ki1.b", "I");
@@ -122,7 +122,7 @@ public class Constants {
             PhotoSave2 = new HookTarget("mR.g", "");
             PhotoSave3 = new HookTarget("gm.J$b", "");
         } else if (isVersionInRange(versionName, "15.4.1", "15.5.0")) {
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.4.1 Patched ");
+            module.log(2, "LIMEs", "15.4.1 Patched ");
             USER_AGENT_HOOK = new HookTarget("Rj1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("jS0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Ki1.b", "I");
@@ -139,7 +139,7 @@ public class Constants {
             ReactionList = new HookTarget("Iy.l", "");
             WhiteToDark0 = new HookTarget("Xv0.m$b", "");
         } else if (isVersionInRange(versionName, "15.5.0", "15.6.0")) {
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.5.1-15.5.4 Patched ");
+            module.log(2, "LIMEs", "15.5.1-15.5.4 Patched ");
             USER_AGENT_HOOK = new HookTarget("ej1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("FS0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Xh1.b", "I");
@@ -156,7 +156,7 @@ public class Constants {
             ReactionList = new HookTarget("Ky.m", "");
             Video = new HookTarget("YP.I", "");
         } else if (isVersionInRange(versionName, "15.6.0", "15.7.0")) {
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.6.0 Patched ");
+            module.log(2, "LIMEs", "15.6.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("xj1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("bT0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("qi1.b", "I");
@@ -173,7 +173,7 @@ public class Constants {
             Video = new HookTarget("hQ.J", "");
             ReactionList = new HookTarget("Iy.m", "");
         } else if (isVersionInRange(versionName, "15.7.0", "15.8.0")) {
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.7.0 Patched ");
+            module.log(2, "LIMEs", "15.7.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("Si1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("CS0.m", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Lh1.b", "I");
@@ -190,7 +190,7 @@ public class Constants {
             ReactionList = new HookTarget("iz.j", "");
             Video = new HookTarget("PQ.J", "");
         } else if (isVersionInRange(versionName, "15.9.0", "15.10.0")) {
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.0 Patched ");
+            module.log(2, "LIMEs", "15.9.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("Bk1.d", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("ZT0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("uj1.b", "I");
@@ -201,7 +201,7 @@ public class Constants {
                 ChatListClassName = "LD.S";
             } else if (versionName.equals("15.9.3")) {
                 ChatListClassName = "LD.Q";
-                module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.3 Patched ");
+                module.log(2, "LIMEs", "15.9.3 Patched ");
             } else {
                 return;
             }
@@ -221,10 +221,10 @@ public class Constants {
                 chatRestoreClassName = "androidx.fragment.app.t";
             } else if (versionName.equals("15.9.3")) {
                 chatRestoreClassName = "androidx.fragment.app.r";
-                module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.3 Patched ");
+                module.log(2, "LIMEs", "15.9.3 Patched ");
             } else {
                 chatRestoreClassName = "androidx.fragment.app.r";
-                module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.0 Patched ");
+                module.log(2, "LIMEs", "15.9.0 Patched ");
             }
             ChatRestore = new HookTarget(chatRestoreClassName, "onActivityResult");
         }
