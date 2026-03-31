@@ -1,4 +1,4 @@
-package io.github.hiro.lime.hooks; // 修正 package 小寫
+package io.github.hiro.lime.hooks;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.List; // 🛠️ 修正 1：必須導入 List
 
 import io.github.hiro.lime.hooks.Constants;
 import io.github.hiro.lime.LimeModule;
@@ -26,11 +27,10 @@ public class UnsentRec implements IHook {
             // 尋找 Application 的 onCreate 方法
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
 
-            // 🛠️ 修正 1：改用 API 101 的 Chain 模式
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    // 1. 執行原始方法 (Modern API 的標準做法)
+                    // 1. 執行原始方法
                     Object result = chain.proceed();
                     
                     // 2. 取得 Application 對象
@@ -46,10 +46,9 @@ public class UnsentRec implements IHook {
                             
                             try {
                                 SQLiteDatabase db1 = SQLiteDatabase.openDatabase(dbFile1, params);
-                                // 啟動訊息攔截器
+                                // 啟動攔截器
                                 hookMessageDeletion(module, classLoader, db1);
                             } catch (Exception e) {
-                                // 數字 4 代表 ERROR 級別
                                 module.log(4, "LIMEs", "UnsentRec 開啟資料庫失敗: " + e.getMessage());
                             }
                         }
@@ -69,7 +68,6 @@ public class UnsentRec implements IHook {
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     
-                    // 🛠️ 修正 2：攔截 Thrift 封包回應
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
@@ -77,10 +75,10 @@ public class UnsentRec implements IHook {
                             Object result = chain.proceed();
 
                             List<Object> args = chain.getArgs();
-                            if (args == null || args.length < 2 || args[1] == null) return result;
+                            // 🛠️ 修正 2：List 必須使用 .size() 而非 .length，使用 .get(1) 而非 [1]
+                            if (args == null || args.size() < 2 || args.get(1) == null) return result;
 
-                            String paramValue = args[1].toString();
-                            // 檢測是否包含「收回訊息」的指令
+                            String paramValue = args.get(1).toString();
                             if (paramValue.contains("type:NOTIFIED_DESTROY_MESSAGE,")) {
                                 processMessage(module, paramValue, db1);
                             }
@@ -154,7 +152,6 @@ public class UnsentRec implements IHook {
                         values.put("parameter", "LIMEsUnsend");
 
                         db1.insert("chat_history", null, values);
-                        // 數字 2 代表 INFO 級別
                         module.log(2, "LIMEs", "UnsentRec: 成功寫入防收回紀錄！");
                     }
                 }
