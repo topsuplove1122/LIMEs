@@ -27,7 +27,7 @@ public class RemoveAds implements IHook {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                            Object[] args = chain.getArgs();
+                            List<Object> args = chain.getArgs();
                             if (args != null && args.length > 0 && args[0] != null) {
                                 String request = args[0].toString();
                                 if (request.equals("getBanners") || request.equals("getPrefetchableBanners")) {
@@ -97,7 +97,7 @@ public class RemoveAds implements IHook {
                     // 1. 先執行原本的 addView
                     Object result = chain.proceed(); 
                     
-                    Object[] args = chain.getArgs();
+                    List<Object> args = chain.getArgs();
                     if (args != null && args.length > 0 && args[0] instanceof View) {
                         View view = (View) args[0];
                         String className = view.getClass().getName();
@@ -123,7 +123,7 @@ public class RemoveAds implements IHook {
                             @Override
                             public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                                 Object result = chain.proceed();
-                                Object[] args = chain.getArgs();
+                                List<Object> args = chain.getArgs();
                                 if (args != null && args.length > 0 && args[0] instanceof WebView) {
                                     WebView webView = (WebView) args[0];
                                     webView.evaluateJavascript("(() => { " +
