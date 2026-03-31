@@ -27,7 +27,7 @@ public class PreventUnsendMessage implements IHook {
                 // 執行原方法並獲取回傳值 (等同於舊版的 callOriginal)
                 Object result = chain.proceed();
 
-                Object[] args = chain.getArgs();
+                List<Object> args = chain.getArgs();
                 // 嚴謹檢查：確保參數存在且第一個參數是 "sync" (LINE 同步訊息的特徵)
                 if (args == null || args.length < 2 || args[0] == null || args[1] == null) return result;
 
