@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.List;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
 import io.github.libxposed.api.XposedInterface;
@@ -14,13 +15,14 @@ public class PreventUnsendMessage implements IHook {
         Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
         Method targetMethod = responseClass.getDeclaredMethod(Constants.RESPONSE_HOOK.methodName, Object.class, Object.class);
 
-        module.hook(targetMethod, new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
+        // 🛠️ 修正：hook(method).intercept(...)
+        module.hook(targetMethod).intercept(new XposedInterface.Hooker() {
             @Override
             public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                 Object result = chain.proceed();
-                java.util.List<Object> args = chain.getArgs();
+                List<Object> args = chain.getArgs();
                 
-                if (args != null && args.size() >= 2 && "sync".equals(args.get(0).toString())) {
+                if (args != null && args.size() >= 2 && args.get(0) != null && "sync".equals(args.get(0).toString())) {
                     try {
                         Field wrapperField = args.get(1).getClass().getDeclaredField("a");
                         wrapperField.setAccessible(true);
@@ -38,7 +40,7 @@ public class PreventUnsendMessage implements IHook {
                         for (Object op : operations) {
                             Field typeField = op.getClass().getDeclaredField("c");
                             typeField.setAccessible(true);
-                            if ("NOTIFIED_DESTROY_MESSAGE".equals(typeField.get(op).toString())) {
+                            if (typeField.get(op) != null && "NOTIFIED_DESTROY_MESSAGE".equals(typeField.get(op).toString())) {
                                 typeField.set(op, typeField.get(op).getClass().getMethod("valueOf", String.class).invoke(null, "DUMMY"));
                                 module.log(2, "LIMEs", "攔截收回指令成功");
                             }
