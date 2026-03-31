@@ -34,13 +34,13 @@ public class LimeModule extends XposedModule {
             Constants.initializeHooks(systemContext, this);
             
             // 執行所有 Hook
-            runAllHooks(param.getClassLoader());
+            runAllHooks(param.classLoader);
             
         } catch (Exception e) {
             Log.e("LIMEs", "LIMEs 初始化 Context 失敗: " + e.getMessage());
             // 萬一反射失敗，給它一個備用方案，保證一定會載入功能
             Constants.initializeHooks(null, this);
-            runAllHooks(param.getClassLoader());
+            runAllHooks(param.classLoader);
         }
     }
 
