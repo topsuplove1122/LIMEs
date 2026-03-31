@@ -11,9 +11,8 @@ import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.List; // 🛠️ 修正 1：必須導入 List
+import java.util.List;
 
-import io.github.hiro.lime.hooks.Constants;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
 import io.github.libxposed.api.XposedInterface;
@@ -27,13 +26,12 @@ public class UnsentRec implements IHook {
             // 尋找 Application 的 onCreate 方法
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
 
-            module.hook(onCreateMethod, new XposedInterface.Hooker() {
+            // 🛠️ 修正 1：加上 .intercept() 並補上泛型 <XposedInterface.BeforeHookCallback>
+            module.hook(onCreateMethod).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    // 1. 執行原始方法
                     Object result = chain.proceed();
                     
-                    // 2. 取得 Application 對象
                     Application appContext = (Application) chain.getThisObject();
                     if (appContext == null) return result;
 
@@ -46,7 +44,6 @@ public class UnsentRec implements IHook {
                             
                             try {
                                 SQLiteDatabase db1 = SQLiteDatabase.openDatabase(dbFile1, params);
-                                // 啟動攔截器
                                 hookMessageDeletion(module, classLoader, db1);
                             } catch (Exception e) {
                                 module.log(4, "LIMEs", "UnsentRec 開啟資料庫失敗: " + e.getMessage());
@@ -68,14 +65,13 @@ public class UnsentRec implements IHook {
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     
-                    module.hook(method, new XposedInterface.Hooker() {
+                    // 🛠️ 修正 2：加上 .intercept() 並補上泛型 <XposedInterface.BeforeHookCallback>
+                    module.hook(method).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                         @Override
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                            // 先執行原本的網路回應
                             Object result = chain.proceed();
 
                             List<Object> args = chain.getArgs();
-                            // 🛠️ 修正 2：List 必須使用 .size() 而非 .length，使用 .get(1) 而非 [1]
                             if (args == null || args.size() < 2 || args.get(1) == null) return result;
 
                             String paramValue = args.get(1).toString();
