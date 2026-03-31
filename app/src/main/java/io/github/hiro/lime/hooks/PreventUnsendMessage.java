@@ -19,7 +19,7 @@ public class PreventUnsendMessage implements IHook {
         // if (!limeOptions.preventUnsendMessage.checked) return;
 
         try {
-            Class responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
+            Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
 
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
@@ -54,7 +54,7 @@ public class PreventUnsendMessage implements IHook {
 
                                 Field operationsField = operationResponse.getClass().getDeclaredField("a");
                                 operationsField.setAccessible(true); 
-                                ArrayList operations = (ArrayList) operationsField.get(operationResponse);
+                                ArrayList<?> operations = (ArrayList) operationsField.get(operationResponse);
                                 if (operations == null) return result;
 
                                 for (Object operation : operations) {
