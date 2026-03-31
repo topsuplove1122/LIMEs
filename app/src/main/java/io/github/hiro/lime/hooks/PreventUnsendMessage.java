@@ -19,7 +19,7 @@ public class PreventUnsendMessage implements IHook {
         // if (!limeOptions.preventUnsendMessage.checked) return;
 
         try {
-            Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
+            Class responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
 
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
@@ -27,7 +27,7 @@ public class PreventUnsendMessage implements IHook {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
                         // 1. 【修正】void 改為 Object
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             // 2. 【修正】先執行原始方法並保留結果
                             Object result = callback.callOriginal();
 
@@ -54,7 +54,7 @@ public class PreventUnsendMessage implements IHook {
 
                                 Field operationsField = operationResponse.getClass().getDeclaredField("a");
                                 operationsField.setAccessible(true); 
-                                ArrayList<?> operations = (ArrayList<?>) operationsField.get(operationResponse);
+                                ArrayList operations = (ArrayList) operationsField.get(operationResponse);
                                 if (operations == null) return result;
 
                                 for (Object operation : operations) {
