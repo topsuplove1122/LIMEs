@@ -13,11 +13,13 @@ android {
         versionName "1.28.5alpha"
         multiDexEnabled true
 
-
         proguardFiles += 'proguard-rules.pro'
         buildConfigField 'String', 'HOOK_TARGET_VERSION', '"141910383"'
-        sourceCompatibility = '13'
-        targetCompatibility = '13'
+        
+        // 【修改點 1】強烈建議將 Java 相容性提升到 17。
+        // 因為最新的 libxposed 以及 Android SDK 35 (2026 年的環境) 基本上都要求 Java 17 才能正常編譯。
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     signingConfigs {
@@ -69,7 +71,12 @@ dependencies {
     implementation 'androidx.fragment:fragment:1.8.6'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'net.zetetic:android-database-sqlcipher:4.5.4'
-    compileOnly 'de.robv.android.xposed:api:82'
+    
+    // 【修改點 2】正式替換 API
+    // 移除舊的：compileOnly 'de.robv.android.xposed:api:82'
+    // 換成最新的 libxposed：
+    compileOnly 'io.github.libxposed:api:101.0.1'
+    
     implementation 'org.mozilla:rhino:1.7.15'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation "androidx.work:work-runtime:2.10.0"
