@@ -13,36 +13,32 @@ public class LimeModule extends XposedModule {
     private Context mContext = null;
     private final LimeOptions limeOptions = new LimeOptions();
 
-    public LimeModule(@NonNull XposedInterface base, @NonNull XposedModuleInterface.ModuleLoadedParam param) {
+    // 🛠️ 根據 API 101，建構子不需要參數
+    public LimeModule() {
         super();
-        attachFramework(base);
     }
 
     @Override
-    public void onPackageReady(@NonNull XposedModuleInterface.PackageReadyParam param) {
-        super.onPackageReady(param);
+    public void onPackageLoaded(@NonNull XposedModuleInterface.PackageLoadedParam param) {
+        super.onPackageLoaded(param);
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
-
-        log(2, "LIMEs", "LINE 已就緒，啟動 Hook (API 101)");
 
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            // 🛠️ 修正：使用 .intercept() 串接
-            hook(attachBaseContextMethod).intercept(new XposedInterface.Hooker() {
-                @Override
-                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    Object result = chain.proceed();
-                    if (mContext == null) {
-                        mContext = (Context) chain.getArgs().get(0);
-                        // 取得 Context 後才進行初始化
-                        Constants.initializeHooks(mContext, LimeModule.this);
-                        runAllHooks(param.getClassLoader());
-                    }
-                    return result;
+            // 🛠️ 完美優雅的 Lambda 寫法
+            hook(attachBaseContextMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                if (mContext == null) {
+                    mContext = (Context) chain.getArgs().get(0);
+                    // 在這裡初始化常數與呼叫 Hook
+                    Constants.initializeHooks(mContext, LimeModule.this);
+                    runAllHooks(param.getClassLoader());
                 }
+                return result;
             });
         } catch (Exception e) {
-            log(4, "LIMEs", "啟動失敗: " + e.getMessage());
+            // Android 內建 Log，保證安全印出錯誤
+            android.util.Log.e("LIMEs", "啟動失敗: " + e.getMessage());
         }
     }
 
