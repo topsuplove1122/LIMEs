@@ -1,60 +1,48 @@
 package io.github.hiro.lime;
 
-import android.app.Application;
-import android.content.Context;
 import androidx.annotation.NonNull;
-import java.lang.reflect.Method;
 import io.github.hiro.lime.hooks.*;
-import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
+import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModuleInterface;
+import java.lang.reflect.Method;
 
 public class LimeModule extends XposedModule {
-    private Context mContext = null;
     private final LimeOptions limeOptions = new LimeOptions();
 
+    // 核心架構：構造函數必須調用 attachFramework
     public LimeModule(@NonNull XposedInterface base, @NonNull XposedModuleInterface.ModuleLoadedParam param) {
-        super(base); 
+        super(base, param);
+        attachFramework(base);
     }
 
+    // 生命週期：onPackageReady 是 Modern API 的主要 Hook 點
     @Override
-    public void onPackageLoaded(@NonNull XposedModuleInterface.PackageLoadedParam param) {
-        super.onPackageLoaded(param);
+    public void onPackageReady(@NonNull XposedModuleInterface.PackageLoadedParam param) {
+        super.onPackageReady(param);
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
 
-        log(2, "LIMEs", "開始注入 LINE...");
+        log("LIMEs: 檢測到 LINE，準備注入 (API 101)");
 
-        try {
-            Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            
-            // 🛠️ 修正：不要在 Hooker 後面加 <...>, 直接實作方法即可
-            hook(attachBaseContextMethod, new XposedInterface.Hooker() {
-                @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    if (mContext == null) {
-                        mContext = (Context) callback.getArgs()[0];
-                        log(2, "LIMEs", "已獲取 Context");
-                        Constants.initializeHooks(mContext, LimeModule.this);
-                        runAllHooks(mContext.getClassLoader());
-                    }
-                    return callback.callOriginal();
-                }
-            });
-        } catch (Exception e) {
-            log(4, "LIMEs", "啟動失敗: " + e.getMessage());
-        }
+        // 這裡不需要手動 Hook Application.onCreate 獲取 Context
+        // 因為 Modern API 已經在 onPackageReady 提供穩定的 ClassLoader
+        runAllHooks(param.getClassLoader());
     }
 
     private void runAllHooks(ClassLoader classLoader) {
         IHook[] hooks = {
-            new RemoveAds(), new ChatList(), new UnsentRec(),
-            new PreventUnsendMessage(), new ReadChecker()
+            new RemoveAds(),
+            new ChatList(),
+            new UnsendRec(),
+            new PreventUnsendMessage(),
+            new ReadChecker()
         };
+
         for (IHook hookItem : hooks) {
             try {
                 hookItem.hook(this, classLoader, limeOptions);
             } catch (Throwable t) {
-                log(4, "LIMEs", "Hook 執行失敗: " + t.getMessage());
+                log("LIMEs: Hook 項目執行失敗: " + t.getMessage());
             }
         }
     }
