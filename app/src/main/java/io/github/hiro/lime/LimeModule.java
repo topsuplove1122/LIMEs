@@ -21,7 +21,7 @@ public class LimeModule extends XposedModule {
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
 
         // 💥 使用大紅字 Log，保證絕對看得到
-        log("LIMEs: 1. 💥 LINE onPackageLoaded 觸發！模組已成功喚醒！");
+        log(Log.ERROR, "LIMEs", "1. 💥 LINE onPackageLoaded 觸發！模組已成功喚醒！");
 
         try {
             // 🚀 暴力解法：不等 Application 了，直接向系統底層拿 SystemContext！
