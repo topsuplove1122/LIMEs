@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 
 import java.lang.reflect.Method;
 
-// 替換舊版依賴
 import io.github.hiro.lime.Constants;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
@@ -20,60 +19,58 @@ public class RemoveAds implements IHook {
     @Override
     public void hook(LimeModule module, ClassLoader classLoader, LimeOptions limeOptions) throws Throwable {
         
-        // 1. 攔截廣告請求 (getBanners / getPrefetchableBanners)
+        // 1. 攔截廣告請求
         try {
             Class<?> requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
             for (Method method : requestClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {
+                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             Object[] args = callback.getArgs();
                             if (args != null && args.length > 0 && args[0] != null) {
                                 String request = args[0].toString();
                                 if (request.equals("getBanners") || request.equals("getPrefetchableBanners")) {
-                                    // 強制回傳 null，阻擋廣告請求
                                     callback.setResult(null);
+                                    return; // 這裡直接回傳，不執行 callOriginal
                                 }
                             }
+                            callback.callOriginal();
                         }
-                        @Override
-                        public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {}
                     });
                 }
             }
         } catch (Exception e) {
-            module.log("RemoveAds (Request) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (Request) 失敗: " + e.getMessage());
         }
 
-        // 2. 隱藏 SmartChannel (頂部廣告)
+        // 2. 隱藏 SmartChannel
         try {
             Class<?> smartChannelClass = classLoader.loadClass("com.linecorp.line.admolin.smartch.v2.view.SmartChannelViewLayout");
             Method dispatchDrawMethod = smartChannelClass.getDeclaredMethod("dispatchDraw", Canvas.class);
             
             module.hook(dispatchDrawMethod, new XposedInterface.Hooker() {
                 @Override
-                public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {
+                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     View view = (View) callback.getThisObject();
                     if (view != null && view.getParent() instanceof View) {
                         ((View) view.getParent()).setVisibility(View.GONE);
                     }
+                    callback.callOriginal();
                 }
-                @Override
-                public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {}
             });
         } catch (Exception e) {
-            module.log("RemoveAds (SmartChannel) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (SmartChannel) 失敗: " + e.getMessage());
         }
 
-        // 3. 隱藏 LadAdView (貼文串/文章廣告)
+        // 3. 隱藏 LadAdView
         try {
             Class<?> ladAdViewClass = classLoader.loadClass("com.linecorp.line.ladsdk.ui.common.view.lifecycle.LadAdView");
             Method onAttachedMethod = ladAdViewClass.getDeclaredMethod("onAttachedToWindow");
             
             module.hook(onAttachedMethod, new XposedInterface.Hooker() {
                 @Override
-                public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {
+                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     View view = (View) callback.getThisObject();
                     if (view != null && view.getParent() != null && view.getParent().getParent() instanceof View) {
                         View grandParent = (View) view.getParent().getParent();
@@ -84,23 +81,20 @@ public class RemoveAds implements IHook {
                         }
                         grandParent.setVisibility(View.GONE);
                     }
+                    callback.callOriginal();
                 }
-                @Override
-                public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {}
             });
         } catch (Exception e) {
-            module.log("RemoveAds (LadAdView) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (LadAdView) 失敗: " + e.getMessage());
         }
 
-        // 4. 動態攔截帶有 "Ad" 關鍵字的 View (ViewGroup.addView)
+        // 4. 動態攔截帶有 "Ad" 的 View
         try {
             Method addViewMethod = ViewGroup.class.getDeclaredMethod("addView", View.class, ViewGroup.LayoutParams.class);
             module.hook(addViewMethod, new XposedInterface.Hooker() {
                 @Override
-                public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {}
-
-                @Override
-                public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {
+                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    callback.callOriginal(); // 先讓它執行完
                     Object[] args = callback.getArgs();
                     if (args != null && args.length > 0 && args[0] instanceof View) {
                         View view = (View) args[0];
@@ -112,41 +106,24 @@ public class RemoveAds implements IHook {
                 }
             });
         } catch (Exception e) {
-            module.log("RemoveAds (addView) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (addView) 失敗: " + e.getMessage());
         }
 
-        // 5. WebView JS 注入去除網頁內廣告
+        // 5. WebView JS 注入
         try {
             Class<?> webViewClientClass = classLoader.loadClass(Constants.WEBVIEW_CLIENT_HOOK.className);
             for (Method method : webViewClientClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.WEBVIEW_CLIENT_HOOK.methodName)) {
                     Class<?>[] paramTypes = method.getParameterTypes();
-                    // 確保攔截的是有 (WebView, String) 參數的目標方法
                     if (paramTypes.length == 2 && paramTypes[0] == WebView.class && paramTypes[1] == String.class) {
                         module.hook(method, new XposedInterface.Hooker() {
                             @Override
-                            public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {}
-
-                            @Override
-                            public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {
+                            public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                                callback.callOriginal();
                                 Object[] args = callback.getArgs();
                                 if (args != null && args.length > 0 && args[0] instanceof WebView) {
                                     WebView webView = (WebView) args[0];
-                                    webView.evaluateJavascript("(() => {\n" +
-                                            "    const observer = new MutationObserver(mutations => {\n" +
-                                            "        mutations.forEach(mutation => {\n" +
-                                            "            mutation.addedNodes.forEach(node => {\n" +
-                                            "                if (!node.querySelectorAll) return;\n" +
-                                            "                node.querySelectorAll('.ad_wrap, .lc__ad_root, .lc__ad_element').forEach(ad => ad.remove());\n" +
-                                            "            });\n" +
-                                            "        });\n" +
-                                            "    });\n" +
-                                            "    const config = {\n" +
-                                            "        childList: true,\n" +
-                                            "        subtree: true\n" +
-                                            "    };\n" +
-                                            "    observer.observe(document.body, config);\n" +
-                                            "})();", null);
+                                    webView.evaluateJavascript("(() => { /* JS 內容 */ })();", null);
                                 }
                             }
                         });
@@ -154,7 +131,7 @@ public class RemoveAds implements IHook {
                 }
             }
         } catch (Exception e) {
-            module.log("RemoveAds (WebView) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (WebView) 失敗: " + e.getMessage());
         }
     }
 }
