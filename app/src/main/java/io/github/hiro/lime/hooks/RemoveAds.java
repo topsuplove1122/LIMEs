@@ -26,16 +26,17 @@ public class RemoveAds implements IHook {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             Object[] args = callback.getArgs();
                             if (args != null && args.length > 0 && args[0] != null) {
                                 String request = args[0].toString();
                                 if (request.equals("getBanners") || request.equals("getPrefetchableBanners")) {
+                                    // 強制回傳 null，阻擋廣告請求
                                     callback.setResult(null);
-                                    return; // 這裡直接回傳，不執行 callOriginal
+                                    return null; 
                                 }
                             }
-                            callback.callOriginal();
+                            return callback.callOriginal();
                         }
                     });
                 }
@@ -44,33 +45,33 @@ public class RemoveAds implements IHook {
             module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (Request) 失敗: " + e.getMessage());
         }
 
-        // 2. 隱藏 SmartChannel
+        // 2. 隱藏 SmartChannel (頂部廣告)
         try {
             Class<?> smartChannelClass = classLoader.loadClass("com.linecorp.line.admolin.smartch.v2.view.SmartChannelViewLayout");
             Method dispatchDrawMethod = smartChannelClass.getDeclaredMethod("dispatchDraw", Canvas.class);
             
             module.hook(dispatchDrawMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     View view = (View) callback.getThisObject();
                     if (view != null && view.getParent() instanceof View) {
                         ((View) view.getParent()).setVisibility(View.GONE);
                     }
-                    callback.callOriginal();
+                    return callback.callOriginal();
                 }
             });
         } catch (Exception e) {
             module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "RemoveAds (SmartChannel) 失敗: " + e.getMessage());
         }
 
-        // 3. 隱藏 LadAdView
+        // 3. 隱藏 LadAdView (貼文串廣告)
         try {
             Class<?> ladAdViewClass = classLoader.loadClass("com.linecorp.line.ladsdk.ui.common.view.lifecycle.LadAdView");
             Method onAttachedMethod = ladAdViewClass.getDeclaredMethod("onAttachedToWindow");
             
             module.hook(onAttachedMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     View view = (View) callback.getThisObject();
                     if (view != null && view.getParent() != null && view.getParent().getParent() instanceof View) {
                         View grandParent = (View) view.getParent().getParent();
@@ -81,7 +82,7 @@ public class RemoveAds implements IHook {
                         }
                         grandParent.setVisibility(View.GONE);
                     }
-                    callback.callOriginal();
+                    return callback.callOriginal();
                 }
             });
         } catch (Exception e) {
@@ -93,8 +94,8 @@ public class RemoveAds implements IHook {
             Method addViewMethod = ViewGroup.class.getDeclaredMethod("addView", View.class, ViewGroup.LayoutParams.class);
             module.hook(addViewMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    callback.callOriginal(); // 先讓它執行完
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    Object result = callback.callOriginal(); // 先讓它執行完
                     Object[] args = callback.getArgs();
                     if (args != null && args.length > 0 && args[0] instanceof View) {
                         View view = (View) args[0];
@@ -103,6 +104,7 @@ public class RemoveAds implements IHook {
                             view.setVisibility(View.GONE);
                         }
                     }
+                    return result;
                 }
             });
         } catch (Exception e) {
@@ -118,13 +120,14 @@ public class RemoveAds implements IHook {
                     if (paramTypes.length == 2 && paramTypes[0] == WebView.class && paramTypes[1] == String.class) {
                         module.hook(method, new XposedInterface.Hooker() {
                             @Override
-                            public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                                callback.callOriginal();
+                            public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                                Object result = callback.callOriginal();
                                 Object[] args = callback.getArgs();
                                 if (args != null && args.length > 0 && args[0] instanceof WebView) {
                                     WebView webView = (WebView) args[0];
                                     webView.evaluateJavascript("(() => { /* JS 內容 */ })();", null);
                                 }
+                                return result;
                             }
                         });
                     }
