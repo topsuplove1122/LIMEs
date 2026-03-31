@@ -15,6 +15,7 @@ import io.github.hiro.hiro.lime.hooks.IHook;
 import io.github.hiro.hiro.lime.hooks.PreventUnsendMessage;
 import io.github.hiro.hiro.lime.hooks.RemoveAds;
 import io.github.hiro.hiro.lime.hooks.UnsentRec;
+import io.github.hiro.lime.hooks.ReadChecker;
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
