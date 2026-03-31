@@ -44,8 +44,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import io.github.hiro.lime.hooks.CustomPreferences;
-import io.github.hiro.lime.hooks.DocumentPreferences;
+// import io.github.hiro.lime.hooks.CustomPreferences;
+// import io.github.hiro.lime.hooks.DocumentPreferences;
 
 public class MainActivity extends Activity {
     public LimeOptions limeOptions = new LimeOptions();
