@@ -1,13 +1,13 @@
-package io.github.hiro.lime.hooks; // 修正 P 為小寫
+package io.github.hiro.lime.hooks;
 
 import android.app.Application;
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 
 import java.lang.reflect.Method;
+import java.util.List; // 🛠️ 確保 import 了 List
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,11 +25,10 @@ public class ChatList implements IHook {
             // 尋找 Application 的 onCreate 方法
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
 
-            // 🛠️ 修正 1：改用 API 101 的 Chain 模式
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    // 1. 執行原始方法 (手動呼叫並獲取回傳值)
+                    // 1. 執行原始方法
                     Object result = chain.proceed();
                     
                     Application appContext = (Application) chain.getThisObject();
@@ -69,7 +68,6 @@ public class ChatList implements IHook {
                                 // 執行後續的訊息攔截
                                 hookMessageDeletion(module, classLoader, db);
                             } catch (Exception e) {
-                                // 使用數字 4 代表 ERROR 等級
                                 module.log(4, "LIMEs", "Lime Trigger Error: " + e.getMessage());
                             }
                         }
@@ -84,7 +82,6 @@ public class ChatList implements IHook {
 
     private void hookMessageDeletion(LimeModule module, ClassLoader classLoader, SQLiteDatabase db) {
         try {
-            // 🛠️ 修正 2：Thrift 請求攔截
             Class<?> requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
             for (Method method : requestClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
@@ -94,9 +91,10 @@ public class ChatList implements IHook {
                             Object result = chain.proceed();
                             
                             List<Object> args = chain.getArgs();
-                            if (args == null || args.length < 2 || args[1] == null) return result;
+                            // 🛠️ 修正 2：List 必須使用 .size() 而非 .length，使用 .get(1) 而非 [1]
+                            if (args == null || args.size() < 2 || args.get(1) == null) return result;
                             
-                            String paramValue = args[1].toString();
+                            String paramValue = args.get(1).toString();
                             
                             if (paramValue.contains("setChatHiddenStatusRequest")) {
                                 String talkId = extractTalkId(paramValue);
@@ -118,7 +116,6 @@ public class ChatList implements IHook {
                 }
             }
 
-            // 🛠️ 修正 3：Thrift 回應攔截
             Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
@@ -127,7 +124,6 @@ public class ChatList implements IHook {
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                             Object result = chain.proceed();
                             try {
-                                // 每次有回應時強制同步黑名單狀態，防止 LINE 擅自恢復
                                 db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id IN (SELECT chat_id FROM lime_hidden_chats)");
                             } catch (Exception ignored) {}
                             return result;
