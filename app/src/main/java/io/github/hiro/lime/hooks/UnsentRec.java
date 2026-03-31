@@ -29,7 +29,7 @@ public class UnsentRec implements IHook {
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
                 // 【修正】回傳類型改為 Object
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     // 1. 必須執行原始方法並保留回傳值
                     Object result = callback.callOriginal();
                     
@@ -71,7 +71,7 @@ public class UnsentRec implements IHook {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
                         // 【修正】回傳類型改為 Object
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             // 先執行原本的網路回應
                             Object result = callback.callOriginal();
 
