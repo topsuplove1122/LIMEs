@@ -13,9 +13,6 @@ import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-
 import java.io.File;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -25,10 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
-import io.github.libxposed.api.XposedInterface;
 
 public class ReadChecker implements IHook {
     private SQLiteDatabase db_line = null;
@@ -37,79 +32,59 @@ public class ReadChecker implements IHook {
 
     @Override
     public void hook(LimeModule module, ClassLoader classLoader, LimeOptions limeOptions) throws Throwable {
-
-        // 1. 初始化資料庫與攔截封包 (Hook Application.onCreate)
         try {
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
-            // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
-            module.hook(onCreateMethod).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
-                @Override
-                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    Object result = chain.proceed();
-                    
-                    Application appContext = (Application) chain.getThisObject();
-                    if (appContext == null) return result;
+            module.hook(onCreateMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                Application appContext = (Application) chain.getThisObject();
+                if (appContext == null) return result;
 
-                    File dbFileLine = appContext.getDatabasePath("naver_line");
-                    File dbFileContact = appContext.getDatabasePath("contact");
+                File dbFileLine = appContext.getDatabasePath("naver_line");
+                File dbFileContact = appContext.getDatabasePath("contact");
 
-                    if (dbFileLine.exists() && dbFileContact.exists()) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                            SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
-                                    .addOpenFlags(SQLiteDatabase.OPEN_READWRITE)
-                                    .build();
+                if (dbFileLine.exists() && dbFileContact.exists()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                        SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
+                                .addOpenFlags(SQLiteDatabase.OPEN_READWRITE)
+                                .build();
+                        db_line = SQLiteDatabase.openDatabase(dbFileLine, params);
+                        db_contact = SQLiteDatabase.openDatabase(dbFileContact, params);
 
-                            db_line = SQLiteDatabase.openDatabase(dbFileLine, params);
-                            db_contact = SQLiteDatabase.openDatabase(dbFileContact, params);
+                        try {
+                            db_line.execSQL("CREATE TABLE IF NOT EXISTS lime_read_watermarks (chat_id TEXT, reader_mid TEXT, max_msg_id INTEGER, PRIMARY KEY(chat_id, reader_mid))");
+                        } catch (Exception ignored) {}
 
-                            try {
-                                db_line.execSQL("CREATE TABLE IF NOT EXISTS lime_read_watermarks (chat_id TEXT, reader_mid TEXT, max_msg_id INTEGER, PRIMARY KEY(chat_id, reader_mid))");
-                            } catch (Exception ignored) {}
-
-                            hookNetwork(module, classLoader);
-                        }
+                        hookNetwork(module, classLoader);
                     }
-                    return result;
                 }
+                return result;
             });
         } catch (Exception e) {
             module.log(4, "LIMEs", "ReadChecker (onCreate) 失敗: " + e.getMessage());
         }
 
-        // 2. 獲取目前進入的聊天室 ID (Hook ChatHistoryRequest.getChatId)
         try {
             Class<?> chatHistoryRequestClass = classLoader.loadClass("com.linecorp.line.chat.request.ChatHistoryRequest");
             Method getChatIdMethod = chatHistoryRequestClass.getDeclaredMethod("getChatId");
-            
-            // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
-            module.hook(getChatIdMethod).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
-                @Override
-                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    Object result = chain.proceed();
-                    currentChatId = (String) result;
-                    return result;
-                }
+            module.hook(getChatIdMethod).intercept(chain -> {
+                Object result = chain.proceed();
+                currentChatId = (String) result;
+                return result;
             });
         } catch (Exception e) {
             module.log(4, "LIMEs", "ReadChecker (getChatId) 失敗: " + e.getMessage());
         }
 
-        // 3. 在畫面上方加入按鈕 (Hook ChatHistoryActivity.onCreate)
         try {
             Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
-
-            // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
-            module.hook(activityOnCreate).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
-                @Override
-                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    Object result = chain.proceed();
-                    Activity activity = (Activity) chain.getThisObject();
-                    if (currentChatId != null) {
-                        addTopButton(activity);
-                    }
-                    return result;
+            module.hook(activityOnCreate).intercept(chain -> {
+                Object result = chain.proceed();
+                Activity activity = (Activity) chain.getThisObject();
+                if (currentChatId != null) {
+                    addTopButton(activity);
                 }
+                return result;
             });
         } catch (Exception e) {
             module.log(4, "LIMEs", "ReadChecker (Activity) 失敗: " + e.getMessage());
@@ -121,42 +96,37 @@ public class ReadChecker implements IHook {
             Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
-                    // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
-                    module.hook(method).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
-                        @Override
-                        public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                            Object result = chain.proceed();
-                            
-                            List<Object> args = chain.getArgs();
-                            if (args == null || args.size() < 2 || args.get(1) == null) return result;
+                    module.hook(method).intercept(chain -> {
+                        Object result = chain.proceed();
+                        List<Object> args = chain.getArgs();
+                        if (args == null || args.size() < 2 || args.get(1) == null) return result;
 
-                            String paramValue = args.get(1).toString();
-                            if (paramValue.contains("type:NOTIFIED_READ_MESSAGE")) {
-                                String[] operations = paramValue.split("Operation\\(");
-                                for (String op : operations) {
-                                    if (op.contains("type:NOTIFIED_READ_MESSAGE")) {
-                                        String readerMid = extractParam(op, "param2:");
-                                        String msgIdStr = extractParam(op, "param3:");
+                        String paramValue = args.get(1).toString();
+                        if (paramValue.contains("type:NOTIFIED_READ_MESSAGE")) {
+                            String[] operations = paramValue.split("Operation\\(");
+                            for (String op : operations) {
+                                if (op.contains("type:NOTIFIED_READ_MESSAGE")) {
+                                    String readerMid = extractParam(op, "param2:");
+                                    String msgIdStr = extractParam(op, "param3:");
 
-                                        if (readerMid != null && msgIdStr != null && db_line != null) {
-                                            try {
-                                                long msgId = Long.parseLong(msgIdStr);
-                                                try (Cursor c = db_line.rawQuery("SELECT chat_id FROM chat_history WHERE server_id = ?", new String[]{msgIdStr})) {
-                                                    if (c.moveToFirst()) {
-                                                        String exactChatId = c.getString(0);
-                                                        db_line.execSQL("INSERT OR REPLACE INTO lime_read_watermarks (chat_id, reader_mid, max_msg_id) VALUES (?, ?, ?)",
-                                                                new Object[]{exactChatId, readerMid, msgId});
-                                                    }
+                                    if (readerMid != null && msgIdStr != null && db_line != null) {
+                                        try {
+                                            long msgId = Long.parseLong(msgIdStr);
+                                            try (Cursor c = db_line.rawQuery("SELECT chat_id FROM chat_history WHERE server_id = ?", new String[]{msgIdStr})) {
+                                                if (c.moveToFirst()) {
+                                                    String exactChatId = c.getString(0);
+                                                    db_line.execSQL("INSERT OR REPLACE INTO lime_read_watermarks (chat_id, reader_mid, max_msg_id) VALUES (?, ?, ?)",
+                                                            new Object[]{exactChatId, readerMid, msgId});
                                                 }
-                                            } catch (Exception e) {
-                                                module.log(4, "LIMEs", "ReadChecker Network Error: " + e.getMessage());
                                             }
+                                        } catch (Exception e) {
+                                            module.log(4, "LIMEs", "ReadChecker Network Error: " + e.getMessage());
                                         }
                                     }
                                 }
                             }
-                            return result;
                         }
+                        return result;
                     });
                 }
             }
