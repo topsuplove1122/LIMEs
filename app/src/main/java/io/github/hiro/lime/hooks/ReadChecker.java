@@ -45,7 +45,7 @@ public class ReadChecker implements IHook {
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
                 // 【修正】回傳改為 Object
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     // 【修正】執行原本方法並保留回傳值
                     Object result = callback.callOriginal();
                     
@@ -80,12 +80,12 @@ public class ReadChecker implements IHook {
 
         // 2. 獲取目前進入的聊天室 ID (Hook ChatHistoryRequest.getChatId)
         try {
-            Class<?> chatHistoryRequestClass = classLoader.loadClass("com.linecorp.line.chat.request.ChatHistoryRequest");
+            Class chatHistoryRequestClass = classLoader.loadClass("com.linecorp.line.chat.request.ChatHistoryRequest");
             Method getChatIdMethod = chatHistoryRequestClass.getDeclaredMethod("getChatId");
             
             module.hook(getChatIdMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     Object result = callback.callOriginal();
                     currentChatId = (String) callback.getResult();
                     return result;
@@ -97,12 +97,12 @@ public class ReadChecker implements IHook {
 
         // 3. 加入按鈕 (Hook ChatHistoryActivity.onCreate)
         try {
-            Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
+            Class chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
 
             module.hook(activityOnCreate, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     Object result = callback.callOriginal();
                     Activity activity = (Activity) callback.getThisObject();
                     if (currentChatId != null) {
@@ -118,12 +118,12 @@ public class ReadChecker implements IHook {
 
     private void hookNetwork(LimeModule module, ClassLoader classLoader) {
         try {
-            Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
+            Class responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             Object result = callback.callOriginal();
                             
                             Object[] args = callback.getArgs();
