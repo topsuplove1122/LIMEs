@@ -1,5 +1,7 @@
 plugins {
     id 'com.android.application'
+    // 🚀 修正 1：加上 LibXposed 官方模組打包插件 (負責自動生成 META-INF 配置)
+    id 'io.github.libxposed.module' version '1.0.6' 
 }
 
 android {
@@ -7,7 +9,6 @@ android {
     compileSdk 35
 
     defaultConfig {
-        // 🚀 修正 1：加上明確的 applicationId，確保底層查戶口不會查錯
         applicationId "io.github.hiro.lime"
         
         minSdk 22
@@ -65,7 +66,8 @@ android {
                 include '**/hooks/PreventUnsendMessage.java'
                 include '**/hooks/ReadChecker.java'
             }
-            // 🚀 修正 2：強制打包 resources，這是 LibXposed API 101 的生命線！
+            // 這裡可以保留，如果你有其他的資源檔要包裝。
+            // 但針對 LibXposed 的 META-INF，上方的插件會自動處理好，不用擔心。
             resources {
                 srcDirs = ['src/main/resources']
             }
@@ -97,7 +99,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'net.zetetic:android-database-sqlcipher:4.5.4'
     
-    // libxposed API
+    // libxposed API (這行已經正確了，不用動)
     compileOnly 'io.github.libxposed:api:101.0.1'
     
     implementation 'org.mozilla:rhino:1.7.15'
@@ -110,4 +112,12 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+}
+
+// 🚀 修正 2：透過 DSL 明確告訴 LibXposed 你的主類別是誰！
+// 插件會根據這個設定，自動把鑰匙交給 LSPosed。
+libxposed {
+    moduleInfo {
+        moduleClass = "io.github.hiro.lime.LimeModule"
+    }
 }
