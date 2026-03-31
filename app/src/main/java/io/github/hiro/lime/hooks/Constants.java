@@ -3,56 +3,41 @@ package io.github.hiro.lime.hooks;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
-// 1. 完全移除了 de.robv.android.xposed 的所有依賴
+// 1. 導入 libxposed 的接口以使用 LOG 等級
+import io.github.libxposed.api.XposedInterface;
 import io.github.hiro.lime.LimeModule;
 
 public class Constants {
     public static String PACKAGE_NAME = "jp.naver.line.android";
     public static String MODULE_NAME = "io.github.hiro.lime";
 
-    //TRADITIONAL_CHINESE
+    // --- 以下 HookTarget 保持不變 ---
     public static HookTarget USER_AGENT_HOOK = new HookTarget("qi1.c", "j");
-    //HANDLED_AND_RETURN_TRUE
     public static HookTarget WEBVIEW_CLIENT_HOOK = new HookTarget("VP0.k", "onPageFinished");
-    //NOTIFICATION_DISABLED
     public static HookTarget MUTE_MESSAGE_HOOK = new HookTarget("jh1.b", "I");
-    //PROCESSING
     public static HookTarget MARK_AS_READ_HOOK = new HookTarget("nP.d$d", "run");
-
-    //ChatListViewModel
     public static HookTarget Archive = new HookTarget("LB.W", "invokeSuspend");
-
-    // 這是你親手找出來的最新入口！
     public static HookTarget REQUEST_HOOK = new HookTarget("org.apache.thrift.o", "b");
     public static HookTarget RESPONSE_HOOK = new HookTarget("org.apache.thrift.o", "a");
-    //BackEventCompat
     public static HookTarget RemoveVoiceRecord_Hook_a = new HookTarget("q.j", "run");
-
-
     public static HookTarget ChatRestore = new HookTarget("", "onActivityResult");
-
-
     public static HookTarget PhotoSave = new HookTarget("", "");
     public static HookTarget PhotoSave1 = new HookTarget("", "");
     public static HookTarget PhotoSave2 = new HookTarget("", "");
     public static HookTarget PhotoSave3 = new HookTarget("", "");
     public static HookTarget Video = new HookTarget("", "");
-
     public static HookTarget ReactionList = new HookTarget("", "");
     public static HookTarget WhiteToDark0 = new HookTarget("", "");
 
-
-    // 2. 【核心修改】將原本的 LoadPackageParam 改為接收 Context 和 LimeModule (用來 log)
     public static void initializeHooks(Context context, LimeModule module) {
-        
-        // 3. 不再需要透過 ActivityThread 暴力取得 Context 了！直接用傳進來的 context
         PackageManager pm = context.getPackageManager();
         String versionName = ""; 
         try {
             versionName = pm.getPackageInfo(PACKAGE_NAME, 0).versionName;
-            module.log("LIMEs: 目前偵測到的 LINE 版本為 " + versionName);
+            // 2. 修正 log 呼叫方式 (Level, Tag, Message)
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "目前偵測到的 LINE 版本為 " + versionName);
         } catch (PackageManager.NameNotFoundException e) {
-            module.log("LIMEs: 無法取得 LINE 版本號");
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "無法取得 LINE 版本號");
             return;
         }
 
@@ -122,7 +107,7 @@ public class Constants {
             PhotoSave2 = new HookTarget("XQ.g", "");
             PhotoSave3 = new HookTarget("lm.K$b", "");
         } else if (isVersionInRange(versionName, "15.4.0", "15.4.1")) {
-            module.log("15.4.0 Patched ");
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.4.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("Rj1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("jS0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Ki1.b", "I");
@@ -137,7 +122,7 @@ public class Constants {
             PhotoSave2 = new HookTarget("mR.g", "");
             PhotoSave3 = new HookTarget("gm.J$b", "");
         } else if (isVersionInRange(versionName, "15.4.1", "15.5.0")) {
-            module.log("15.4.1 Patched ");
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.4.1 Patched ");
             USER_AGENT_HOOK = new HookTarget("Rj1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("jS0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Ki1.b", "I");
@@ -154,7 +139,7 @@ public class Constants {
             ReactionList = new HookTarget("Iy.l", "");
             WhiteToDark0 = new HookTarget("Xv0.m$b", "");
         } else if (isVersionInRange(versionName, "15.5.0", "15.6.0")) {
-            module.log("15.5.1-15.5.4 Patched ");
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.5.1-15.5.4 Patched ");
             USER_AGENT_HOOK = new HookTarget("ej1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("FS0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Xh1.b", "I");
@@ -171,7 +156,7 @@ public class Constants {
             ReactionList = new HookTarget("Ky.m", "");
             Video = new HookTarget("YP.I", "");
         } else if (isVersionInRange(versionName, "15.6.0", "15.7.0")) {
-            module.log("15.6.0 Patched ");
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.6.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("xj1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("bT0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("qi1.b", "I");
@@ -188,7 +173,7 @@ public class Constants {
             Video = new HookTarget("hQ.J", "");
             ReactionList = new HookTarget("Iy.m", "");
         } else if (isVersionInRange(versionName, "15.7.0", "15.8.0")) {
-            module.log("15.7.0 Patched ");
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.7.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("Si1.c", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("CS0.m", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("Lh1.b", "I");
@@ -205,7 +190,7 @@ public class Constants {
             ReactionList = new HookTarget("iz.j", "");
             Video = new HookTarget("PQ.J", "");
         } else if (isVersionInRange(versionName, "15.9.0", "15.10.0")) {
-            module.log("15.9.0 Patched ");
+            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.0 Patched ");
             USER_AGENT_HOOK = new HookTarget("Bk1.d", "j");
             WEBVIEW_CLIENT_HOOK = new HookTarget("ZT0.l", "onPageFinished");
             MUTE_MESSAGE_HOOK = new HookTarget("uj1.b", "I");
@@ -216,7 +201,7 @@ public class Constants {
                 ChatListClassName = "LD.S";
             } else if (versionName.equals("15.9.3")) {
                 ChatListClassName = "LD.Q";
-                module.log("15.9.3 Patched ");
+                module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.3 Patched ");
             } else {
                 return;
             }
@@ -236,15 +221,16 @@ public class Constants {
                 chatRestoreClassName = "androidx.fragment.app.t";
             } else if (versionName.equals("15.9.3")) {
                 chatRestoreClassName = "androidx.fragment.app.r";
-                module.log("15.9.3 Patched ");
+                module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.3 Patched ");
             } else {
                 chatRestoreClassName = "androidx.fragment.app.r";
-                module.log("15.9.0 Patched ");
+                module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "15.9.0 Patched ");
             }
             ChatRestore = new HookTarget(chatRestoreClassName, "onActivityResult");
         }
     }
 
+    // --- 以下輔助方法保持不變 ---
     private static boolean isVersionInRange(String versionName, String minVersion, String maxVersion) {
         try {
             int[] currentVersion = parseVersion(versionName);
@@ -278,7 +264,6 @@ public class Constants {
     public static class HookTarget {
         public String className;
         public String methodName;
-
         public HookTarget(String className, String methodName) {
             this.className = className;
             this.methodName = methodName;
