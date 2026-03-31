@@ -1,5 +1,7 @@
 plugins {
     id 'com.android.application'
+    // 🚀 修正 1：引入 Kotlin 插件
+    id 'org.jetbrains.kotlin.android' version '1.9.20' 
 }
 
 android {
@@ -19,9 +21,14 @@ android {
         buildConfigField 'String', 'HOOK_TARGET_VERSION', '"141910383"'
     }
 
+    // 🚀 修正 2：將 Java 與 Kotlin 的編譯版本對齊為 Java 17
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
     }
 
     signingConfigs {
@@ -53,19 +60,9 @@ android {
 
     sourceSets {
         main {
-            java {
-                include '**/LimeModule.java'
-                include '**/LimeOptions.java'
-                include '**/hooks/IHook.java'
-                include '**/hooks/Constants.java'
-                include '**/hooks/ChatList.java'
-                include '**/hooks/RemoveAds.java'
-                include '**/hooks/UnsentRec.java'
-                include '**/hooks/PreventUnsendMessage.java'
-                include '**/hooks/ReadChecker.java'
-            }
-            // 這裡可以保留，如果你有其他的資源檔要包裝。
-            // 但針對 LibXposed 的 META-INF，上方的插件會自動處理好，不用擔心。
+            // 🚀 修正 3：移除 include 限制，或改為 .kt 檔案
+            // 為了方便開發，建議先移除 java {} 區塊內的 include 限制，讓所有類別都能被編譯
+            // 如果一定要限制，請確保副檔名為 .kt
             resources {
                 srcDirs = ['src/main/resources']
             }
@@ -82,29 +79,31 @@ android {
         compose false
     }
 
-    dependenciesInfo {
-        includeInApk false
-        includeInBundle false
-    }
-
     aaptOptions {
         additionalParameters '--allow-reserved-package-id', '--package-id', '0x64'
     }
 
     packaging {
         resources {
+            // 🚀 修正 4：確保 META-INF/xposed/ 下的配置檔被打包
             merges += ['META-INF/xposed/*']
         }
     }
 }
 
 dependencies {
+    // Kotlin 標準庫
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.20"
+
     implementation 'androidx.fragment:fragment:1.8.6'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'net.zetetic:android-database-sqlcipher:4.5.4'
     
-    // libxposed API (這行已經正確了，不用動)
+    // 🚀 修正 5：LibXposed API 101 組合包
+    // API 只在編譯時需要
     compileOnly 'io.github.libxposed:api:101.0.1'
+    // Service 必須打包進 APK，否則 XposedProvider 會報 ClassNotFoundException
+    implementation 'io.github.libxposed:service:101.0.0'
     
     implementation 'org.mozilla:rhino:1.7.15'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
@@ -114,6 +113,7 @@ dependencies {
     implementation 'androidx.documentfile:documentfile:1.1.0'
 }
 
+// 如果你還有遺留的 Java 檔案，保留此項
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
 }
