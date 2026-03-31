@@ -26,12 +26,12 @@ public class ChatList implements IHook {
 
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    // 執行原始方法，拿到 Context
-                    callback.callOriginal();
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    // 1. 先執行原始方法 (手動呼叫並獲取回傳值)
+                    Object result = callback.callOriginal();
                     
                     Application appContext = (Application) callback.getThisObject();
-                    if (appContext == null) return;
+                    if (appContext == null) return result;
 
                     java.io.File dbFile = appContext.getDatabasePath("naver_line");
                     if (dbFile.exists()) {
@@ -40,13 +40,13 @@ public class ChatList implements IHook {
                                     .addOpenFlags(SQLiteDatabase.OPEN_READWRITE)
                                     .build();
                             
-                            SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile, params);
-
                             try {
-                                // 1. 建立專屬黑名單表格
+                                SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile, params);
+
+                                // 建立專屬黑名單表格
                                 db.execSQL("CREATE TABLE IF NOT EXISTS lime_hidden_chats (chat_id TEXT PRIMARY KEY)");
                                 
-                                // 2. 防閃爍觸發器 A
+                                // 防閃爍觸發器 A
                                 db.execSQL("CREATE TRIGGER IF NOT EXISTS enforce_hide_on_msg " +
                                         "AFTER INSERT ON chat_history " +
                                         "FOR EACH ROW " +
@@ -55,7 +55,7 @@ public class ChatList implements IHook {
                                         "UPDATE chat SET is_archived = 1 WHERE chat_id = NEW.chat_id; " +
                                         "END;");
 
-                                // 3. 防閃爍觸發器 B
+                                // 防閃爍觸發器 B
                                 db.execSQL("CREATE TRIGGER IF NOT EXISTS enforce_hide_on_update " +
                                         "AFTER UPDATE OF is_archived ON chat " +
                                         "FOR EACH ROW " +
@@ -63,14 +63,15 @@ public class ChatList implements IHook {
                                         "BEGIN " +
                                         "UPDATE chat SET is_archived = 1 WHERE chat_id = NEW.chat_id; " +
                                         "END;");
+
+                                // 執行後續的訊息攔截
+                                hookMessageDeletion(module, classLoader, db);
                             } catch (Exception e) {
                                 module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "Lime Trigger Error: " + e.getMessage());
                             }
-
-                            // 執行後續的訊息攔截
-                            hookMessageDeletion(module, classLoader, db);
                         }
                     }
+                    return result;
                 }
             });
         } catch (Exception e) {
@@ -85,13 +86,14 @@ public class ChatList implements IHook {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                            callback.callOriginal(); // 執行原本的請求
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                            Object result = callback.callOriginal();
                             
                             Object[] args = callback.getArgs();
-                            if (args == null || args.length < 2 || args[1] == null) return;
+                            if (args == null || args.length < 2 || args[1] == null) return result;
                             
                             String paramValue = args[1].toString();
+                            
                             if (paramValue.contains("setChatHiddenStatusRequest")) {
                                 String talkId = extractTalkId(paramValue);
                                 if (talkId != null) {
@@ -106,6 +108,7 @@ public class ChatList implements IHook {
                                     }
                                 }
                             }
+                            return result;
                         }
                     });
                 }
@@ -116,18 +119,19 @@ public class ChatList implements IHook {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                            callback.callOriginal();
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                            Object result = callback.callOriginal();
                             try {
                                 db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id IN (SELECT chat_id FROM lime_hidden_chats)");
                             } catch (Exception ignored) {}
+                            return result;
                         }
                     });
                 }
             }
 
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ChatList 找不到 Request/Response Class");
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ChatList 找不到 Request/Response Class: " + e.getMessage());
         }
     }
 
