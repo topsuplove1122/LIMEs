@@ -26,8 +26,9 @@ public class LimeModule extends XposedModule {
 
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            // 🛠️ 關鍵修正：加上泛型類型宣告
-            hook(attachBaseContextMethod, new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
+            
+            // 🛠️ 修正：不要在 Hooker 後面加 <...>, 直接實作方法即可
+            hook(attachBaseContextMethod, new XposedInterface.Hooker() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     if (mContext == null) {
