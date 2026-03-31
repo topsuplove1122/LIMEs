@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Map;
 
-import io.github.hiro.lime.Constants;
+import io.github.hiro.lime.hooks.Constants;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
 import io.github.libxposed.api.XposedInterface;
