@@ -23,15 +23,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
+            
         <meta-data
             android:name="xposeddescription"
             android:value="@string/xposed_desc" />
+
         <meta-data
-            android:name="xposedminversion"
-            android:value="82" />
+            android:name="xposedapi"
+            android:value="101" />
+
+        <meta-data
+            android:name="xposedmoduleentry"
+            android:value="io.github.hiro.lime.LimeModule" /> 
+
         <meta-data
             android:name="xposedsharedprefs"
             android:value="true" />
@@ -39,7 +47,6 @@
             android:name="xposedscope"
             android:value="jp.naver.line.android" />
 
-        <!-- FileProviderの追加 -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -48,8 +55,6 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
-
-
         </provider>
 
     </application>
