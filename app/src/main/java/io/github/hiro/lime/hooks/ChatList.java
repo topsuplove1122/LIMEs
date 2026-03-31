@@ -26,7 +26,7 @@ public class ChatList implements IHook {
 
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     // 1. 先執行原始方法 (手動呼叫並獲取回傳值)
                     Object result = callback.callOriginal();
                     
@@ -86,7 +86,7 @@ public class ChatList implements IHook {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                             Object result = callback.callOriginal();
                             
                             Object[] args = callback.getArgs();
@@ -119,7 +119,7 @@ public class ChatList implements IHook {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                             Object result = callback.callOriginal();
                             try {
                                 db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id IN (SELECT chat_id FROM lime_hidden_chats)");
