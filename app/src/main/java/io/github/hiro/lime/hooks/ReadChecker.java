@@ -45,7 +45,7 @@ public class ReadChecker implements IHook {
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
                 // 【修正】回傳改為 Object
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     // 【修正】執行原本方法並保留回傳值
                     Object result = callback.callOriginal();
                     
@@ -85,7 +85,7 @@ public class ReadChecker implements IHook {
             
             module.hook(getChatIdMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     Object result = callback.callOriginal();
                     currentChatId = (String) callback.getResult();
                     return result;
@@ -102,7 +102,7 @@ public class ReadChecker implements IHook {
 
             module.hook(activityOnCreate, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     Object result = callback.callOriginal();
                     Activity activity = (Activity) callback.getThisObject();
                     if (currentChatId != null) {
@@ -123,7 +123,7 @@ public class ReadChecker implements IHook {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                             Object result = callback.callOriginal();
                             
                             Object[] args = callback.getArgs();
