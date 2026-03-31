@@ -13,7 +13,6 @@ public class LimeModule extends XposedModule {
     private Context mContext = null;
     private final LimeOptions limeOptions = new LimeOptions();
 
-    // 🛠️ 修正 1：Java 版建構子只需要 base
     public LimeModule(@NonNull XposedInterface base, @NonNull XposedModuleInterface.ModuleLoadedParam param) {
         super(base); 
     }
@@ -27,9 +26,9 @@ public class LimeModule extends XposedModule {
 
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            hook(attachBaseContextMethod, new XposedInterface.Hooker() {
+            // 🛠️ 關鍵修正：加上泛型類型宣告
+            hook(attachBaseContextMethod, new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                 @Override
-                // 🛠️ 修正 2：參數改為 Object 以繞過泛型檢查，回傳 Object
                 public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     if (mContext == null) {
                         mContext = (Context) callback.getArgs()[0];
