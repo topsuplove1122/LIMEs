@@ -1,6 +1,7 @@
-package io.github.hiro.lime.hooks;
+package io.github.hiro.lime.hooks; // 修正 P 為小寫
 
 import android.app.Application;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 
@@ -24,13 +25,14 @@ public class ChatList implements IHook {
             // 尋找 Application 的 onCreate 方法
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
 
+            // 🛠️ 修正 1：改用 API 101 的 Chain 模式
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    // 1. 先執行原始方法 (手動呼叫並獲取回傳值)
-                    Object result = callback.callOriginal();
+                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                    // 1. 執行原始方法 (手動呼叫並獲取回傳值)
+                    Object result = chain.proceed();
                     
-                    Application appContext = (Application) callback.getThisObject();
+                    Application appContext = (Application) chain.getThisObject();
                     if (appContext == null) return result;
 
                     java.io.File dbFile = appContext.getDatabasePath("naver_line");
@@ -67,7 +69,8 @@ public class ChatList implements IHook {
                                 // 執行後續的訊息攔截
                                 hookMessageDeletion(module, classLoader, db);
                             } catch (Exception e) {
-                                module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "Lime Trigger Error: " + e.getMessage());
+                                // 使用數字 4 代表 ERROR 等級
+                                module.log(4, "LIMEs", "Lime Trigger Error: " + e.getMessage());
                             }
                         }
                     }
@@ -75,21 +78,22 @@ public class ChatList implements IHook {
                 }
             });
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ChatList onCreate Hook 失敗: " + e.getMessage());
+            module.log(4, "LIMEs", "ChatList onCreate Hook 失敗: " + e.getMessage());
         }
     }
 
     private void hookMessageDeletion(LimeModule module, ClassLoader classLoader, SQLiteDatabase db) {
         try {
+            // 🛠️ 修正 2：Thrift 請求攔截
             Class<?> requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
             for (Method method : requestClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                            Object result = callback.callOriginal();
+                        public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                            Object result = chain.proceed();
                             
-                            Object[] args = callback.getArgs();
+                            Object[] args = chain.getArgs();
                             if (args == null || args.length < 2 || args[1] == null) return result;
                             
                             String paramValue = args[1].toString();
@@ -100,11 +104,11 @@ public class ChatList implements IHook {
                                     if (paramValue.contains("hiddenStatus:true") || paramValue.contains("hidden:true")) {
                                         db.execSQL("INSERT OR IGNORE INTO lime_hidden_chats (chat_id) VALUES (?)", new Object[]{talkId});
                                         db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id = ?", new Object[]{talkId});
-                                        module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "Lime: Successfully Hid Chat " + talkId);
+                                        module.log(2, "LIMEs", "Lime: Successfully Hid Chat " + talkId);
                                     } else if (paramValue.contains("hiddenStatus:false") || paramValue.contains("hidden:false")) {
                                         db.execSQL("DELETE FROM lime_hidden_chats WHERE chat_id = ?", new Object[]{talkId});
                                         db.execSQL("UPDATE chat SET is_archived = 0 WHERE chat_id = ?", new Object[]{talkId});
-                                        module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "Lime: Unhid Chat " + talkId);
+                                        module.log(2, "LIMEs", "Lime: Unhid Chat " + talkId);
                                     }
                                 }
                             }
@@ -114,14 +118,16 @@ public class ChatList implements IHook {
                 }
             }
 
+            // 🛠️ 修正 3：Thrift 回應攔截
             Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                            Object result = callback.callOriginal();
+                        public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                            Object result = chain.proceed();
                             try {
+                                // 每次有回應時強制同步黑名單狀態，防止 LINE 擅自恢復
                                 db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id IN (SELECT chat_id FROM lime_hidden_chats)");
                             } catch (Exception ignored) {}
                             return result;
@@ -131,7 +137,7 @@ public class ChatList implements IHook {
             }
 
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ChatList 找不到 Request/Response Class: " + e.getMessage());
+            module.log(4, "LIMEs", "ChatList 找不到 Request/Response Class: " + e.getMessage());
         }
     }
 
