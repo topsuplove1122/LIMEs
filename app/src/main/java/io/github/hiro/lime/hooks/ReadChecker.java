@@ -44,12 +44,11 @@ public class ReadChecker implements IHook {
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                // 【修正】回傳改為 Object
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    // 【修正】執行原本方法並保留回傳值
-                    Object result = callback.callOriginal();
+                // 🛠️ 修正 1：改用 API 101 的 Chain 模式
+                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                    Object result = chain.proceed(); // 必須執行執行原始方法
                     
-                    Application appContext = (Application) callback.getThisObject();
+                    Application appContext = (Application) chain.getThisObject();
                     if (appContext == null) return result;
 
                     File dbFileLine = appContext.getDatabasePath("naver_line");
@@ -75,7 +74,7 @@ public class ReadChecker implements IHook {
                 }
             });
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (onCreate) 失敗: " + e.getMessage());
+            module.log(4, "LIMEs", "ReadChecker (onCreate) 失敗: " + e.getMessage());
         }
 
         // 2. 獲取目前進入的聊天室 ID (Hook ChatHistoryRequest.getChatId)
@@ -85,26 +84,26 @@ public class ReadChecker implements IHook {
             
             module.hook(getChatIdMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    Object result = callback.callOriginal();
-                    currentChatId = (String) callback.getResult();
+                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                    Object result = chain.proceed();
+                    currentChatId = (String) result;
                     return result;
                 }
             });
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (getChatId) 失敗: " + e.getMessage());
+            module.log(4, "LIMEs", "ReadChecker (getChatId) 失敗: " + e.getMessage());
         }
 
-        // 3. 加入按鈕 (Hook ChatHistoryActivity.onCreate)
+        // 3. 在畫面上方加入按鈕 (Hook ChatHistoryActivity.onCreate)
         try {
             Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
 
             module.hook(activityOnCreate, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    Object result = callback.callOriginal();
-                    Activity activity = (Activity) callback.getThisObject();
+                public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                    Object result = chain.proceed();
+                    Activity activity = (Activity) chain.getThisObject();
                     if (currentChatId != null) {
                         addTopButton(activity);
                     }
@@ -112,7 +111,7 @@ public class ReadChecker implements IHook {
                 }
             });
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (Activity) 失敗: " + e.getMessage());
+            module.log(4, "LIMEs", "ReadChecker (Activity) 失敗: " + e.getMessage());
         }
     }
 
@@ -123,10 +122,10 @@ public class ReadChecker implements IHook {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                            Object result = callback.callOriginal();
+                        public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
+                            Object result = chain.proceed();
                             
-                            Object[] args = callback.getArgs();
+                            Object[] args = chain.getArgs();
                             if (args == null || args.length < 2 || args[1] == null) return result;
 
                             String paramValue = args[1].toString();
@@ -148,7 +147,7 @@ public class ReadChecker implements IHook {
                                                     }
                                                 }
                                             } catch (Exception e) {
-                                                module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker Network Error: " + e.getMessage());
+                                                module.log(4, "LIMEs", "ReadChecker Network Error: " + e.getMessage());
                                             }
                                         }
                                     }
@@ -160,11 +159,10 @@ public class ReadChecker implements IHook {
                 }
             }
         } catch (Exception e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (Network) 失敗: " + e.getMessage());
+            module.log(4, "LIMEs", "ReadChecker (Network) 失敗: " + e.getMessage());
         }
     }
 
-    // 後續 UI 與邏輯保持不變...
     private void addTopButton(Activity activity) {
         final int BUTTON_ID = 95279527;
         ViewGroup layout = activity.findViewById(android.R.id.content);
