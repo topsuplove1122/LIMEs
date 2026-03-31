@@ -28,13 +28,14 @@ public class UnsentRec implements IHook {
 
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    // 1. 必須先呼叫原始方法
-                    callback.callOriginal();
+                // 【修正】回傳類型改為 Object
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    // 1. 必須執行原始方法並保留回傳值
+                    Object result = callback.callOriginal();
                     
                     // 2. 取得 Application Context
                     Application appContext = (Application) callback.getThisObject();
-                    if (appContext == null) return;
+                    if (appContext == null) return result;
 
                     File dbFile1 = appContext.getDatabasePath("naver_line");
                     if (dbFile1.exists()) {
@@ -52,6 +53,7 @@ public class UnsentRec implements IHook {
                             }
                         }
                     }
+                    return result;
                 }
             });
         } catch (Exception e) {
@@ -68,17 +70,19 @@ public class UnsentRec implements IHook {
                     
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        // 【修正】回傳類型改為 Object
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             // 先執行原本的網路回應
-                            callback.callOriginal();
+                            Object result = callback.callOriginal();
 
                             Object[] args = callback.getArgs();
-                            if (args == null || args.length < 2 || args[1] == null) return;
+                            if (args == null || args.length < 2 || args[1] == null) return result;
 
                             String paramValue = args[1].toString();
                             if (paramValue.contains("type:NOTIFIED_DESTROY_MESSAGE,")) {
                                 processMessage(module, paramValue, db1);
                             }
+                            return result;
                         }
                     });
                 }
