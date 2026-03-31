@@ -11,12 +11,7 @@ import io.github.libxposed.api.XposedModuleInterface;
 public class LimeModule extends XposedModule {
     private final LimeOptions limeOptions = new LimeOptions();
 
-    // 🚨 致命關鍵：LibXposed API 101 強制要求這個特定的建構子，否則 LSPosed 絕對不會載入！
-    public LimeModule(@NonNull XposedInterface base, @NonNull XposedModuleInterface.ModuleLoadedParam param) {
-        super(base, param);
-        // 只要模組一被 LSPosed 實例化，這行絕對會印出來！
-        log(Log.INFO, "LIMEs", "0. 🚀 LimeModule 實例化成功！建構子已呼叫！");
-    }
+    
 
     // 階段 1：PackageLoaded (API 29+ 早期階段，此時 ClassLoader 尚未準備好，禁止操作)
     @Override
