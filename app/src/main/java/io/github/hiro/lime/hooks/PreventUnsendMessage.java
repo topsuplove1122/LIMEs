@@ -27,7 +27,7 @@ public class PreventUnsendMessage implements IHook {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
                         // 1. 【修正】void 改為 Object
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                             // 2. 【修正】先執行原始方法並保留結果
                             Object result = callback.callOriginal();
 
