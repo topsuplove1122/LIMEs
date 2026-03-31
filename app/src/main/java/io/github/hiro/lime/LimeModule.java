@@ -4,18 +4,16 @@ import android.app.Application;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import java.lang.reflect.Method;
-
 import io.github.hiro.lime.hooks.*; 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
 
 public class LimeModule extends XposedModule {
-
     private Context mContext = null;
     private final LimeOptions limeOptions = new LimeOptions();
 
-    // 🛠️ 修正 1：libxposed 的 XposedModule 在 Java 中通常只需要 base
+    // 修正：只需傳 base 即可
     public LimeModule(@NonNull XposedInterface base, @NonNull XposedModuleInterface.ModuleLoadedParam param) {
         super(base); 
     }
@@ -23,26 +21,24 @@ public class LimeModule extends XposedModule {
     @Override
     public void onPackageLoaded(@NonNull XposedModuleInterface.PackageLoadedParam param) {
         super.onPackageLoaded(param);
-
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
 
-        // 🛠️ 修正 2：使用正確的日誌級別常數 (數字或全名)
-        log(2, "LIMEs", "開始注入 LINE (API 101)...");
+        // 修正：使用數字代表 Level 最保險 (2=INFO, 4=ERROR)
+        log(2, "LIMEs", "開始注入 LINE...");
 
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            
             hook(attachBaseContextMethod, new XposedInterface.Hooker() {
                 @Override
-                // 🛠️ 修正 3：必須回傳 Object，不能是 void
+                // 修正：必須回傳 Object
                 public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     if (mContext == null) {
                         mContext = (Context) callback.getArgs()[0];
                         log(2, "LIMEs", "已獲取 Context");
+                        // 這裡確保 import 了 io.github.hiro.lime.hooks.Constants
                         Constants.initializeHooks(mContext, LimeModule.this);
-                        runAllHooks(param.getClassLoader());
+                        runAllHooks(mContext.getClassLoader()); // 這裡改用 context 的 loader
                     }
-                    // 🛠️ 修正 4：必須回傳原本方法的結果
                     return callback.callOriginal();
                 }
             });
@@ -59,12 +55,11 @@ public class LimeModule extends XposedModule {
             new PreventUnsendMessage(),
             new ReadChecker()
         };
-
         for (IHook hookItem : hooks) {
             try {
                 hookItem.hook(this, classLoader, limeOptions);
             } catch (Throwable t) {
-                log(4, "LIMEs", "Hook 項目執行失敗: " + t.getMessage());
+                log(4, "LIMEs", "Hook 失敗: " + t.getMessage());
             }
         }
     }
