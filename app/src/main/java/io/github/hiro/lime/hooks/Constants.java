@@ -35,9 +35,9 @@ public class Constants {
         try {
             versionName = pm.getPackageInfo(PACKAGE_NAME, 0).versionName;
             // 2. 修正 log 呼叫方式 (Level, Tag, Message)
-            module.log(XposedInterface.LOG_LEVEL_INFO, "LIMEs", "目前偵測到的 LINE 版本為 " + versionName);
+            module.log(2, "LIMEs", "目前偵測到的 LINE 版本為 " + versionName);
         } catch (PackageManager.NameNotFoundException e) {
-            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "無法取得 LINE 版本號");
+            module.log(4, "LIMEs", "無法取得 LINE 版本號");
             return;
         }
 
