@@ -7,7 +7,7 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 
 import java.lang.reflect.Method;
-import java.util.List; // 🛠️ 確保 import 了 List
+import java.util.List; 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +25,8 @@ public class ChatList implements IHook {
             // 尋找 Application 的 onCreate 方法
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
 
-            module.hook(onCreateMethod, new XposedInterface.Hooker() {
+            // 🛠️ 修正：使用 .intercept() 串接，並傳入完整的 Hooker 宣告
+            module.hook(onCreateMethod).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                     // 1. 執行原始方法
@@ -85,13 +86,13 @@ public class ChatList implements IHook {
             Class<?> requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
             for (Method method : requestClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
-                    module.hook(method, new XposedInterface.Hooker() {
+                    // 🛠️ 修正：使用 .intercept() 串接，並傳入完整的 Hooker 宣告
+                    module.hook(method).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                         @Override
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                             Object result = chain.proceed();
                             
                             List<Object> args = chain.getArgs();
-                            // 🛠️ 修正 2：List 必須使用 .size() 而非 .length，使用 .get(1) 而非 [1]
                             if (args == null || args.size() < 2 || args.get(1) == null) return result;
                             
                             String paramValue = args.get(1).toString();
@@ -119,7 +120,8 @@ public class ChatList implements IHook {
             Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
-                    module.hook(method, new XposedInterface.Hooker() {
+                    // 🛠️ 修正：使用 .intercept() 串接，並傳入完整的 Hooker 宣告
+                    module.hook(method).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                         @Override
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                             Object result = chain.proceed();
