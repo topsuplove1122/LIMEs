@@ -22,7 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.List; // 🛠️ 必須導入 List
 import java.util.Locale;
 import java.util.Map;
 
@@ -44,9 +44,8 @@ public class ReadChecker implements IHook {
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                // 🛠️ 修正 1：改用 API 101 的 Chain 模式
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    Object result = chain.proceed(); // 必須執行執行原始方法
+                    Object result = chain.proceed(); // 🛠️ 執行原始方法
                     
                     Application appContext = (Application) chain.getThisObject();
                     if (appContext == null) return result;
@@ -86,6 +85,7 @@ public class ReadChecker implements IHook {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                     Object result = chain.proceed();
+                    // 🛠️ 在 API 101 中，proceed 的回傳值就是該方法的 return 值
                     currentChatId = (String) result;
                     return result;
                 }
@@ -126,9 +126,10 @@ public class ReadChecker implements IHook {
                             Object result = chain.proceed();
                             
                             List<Object> args = chain.getArgs();
-                            if (args == null || args.length < 2 || args[1] == null) return result;
+                            // 🛠️ 修正：List 存取方式
+                            if (args == null || args.size() < 2 || args.get(1) == null) return result;
 
-                            String paramValue = args[1].toString();
+                            String paramValue = args.get(1).toString();
                             if (paramValue.contains("type:NOTIFIED_READ_MESSAGE")) {
                                 String[] operations = paramValue.split("Operation\\(");
                                 for (String op : operations) {
@@ -163,6 +164,7 @@ public class ReadChecker implements IHook {
         }
     }
 
+    // --- UI 與工具方法保持不變 ---
     private void addTopButton(Activity activity) {
         final int BUTTON_ID = 95279527;
         ViewGroup layout = activity.findViewById(android.R.id.content);
