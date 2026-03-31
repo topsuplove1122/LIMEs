@@ -44,11 +44,13 @@ public class ReadChecker implements IHook {
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    callback.callOriginal(); // 必須執行，否則 App 無法啟動
+                // 【修正】回傳改為 Object
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    // 【修正】執行原本方法並保留回傳值
+                    Object result = callback.callOriginal();
                     
                     Application appContext = (Application) callback.getThisObject();
-                    if (appContext == null) return;
+                    if (appContext == null) return result;
 
                     File dbFileLine = appContext.getDatabasePath("naver_line");
                     File dbFileContact = appContext.getDatabasePath("contact");
@@ -69,6 +71,7 @@ public class ReadChecker implements IHook {
                             hookNetwork(module, classLoader);
                         }
                     }
+                    return result;
                 }
             });
         } catch (Exception e) {
@@ -82,28 +85,30 @@ public class ReadChecker implements IHook {
             
             module.hook(getChatIdMethod, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    callback.callOriginal();
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    Object result = callback.callOriginal();
                     currentChatId = (String) callback.getResult();
+                    return result;
                 }
             });
         } catch (Exception e) {
             module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (getChatId) 失敗: " + e.getMessage());
         }
 
-        // 3. 在畫面上方加入按鈕 (Hook ChatHistoryActivity.onCreate)
+        // 3. 加入按鈕 (Hook ChatHistoryActivity.onCreate)
         try {
             Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
 
             module.hook(activityOnCreate, new XposedInterface.Hooker() {
                 @Override
-                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                    callback.callOriginal();
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    Object result = callback.callOriginal();
                     Activity activity = (Activity) callback.getThisObject();
                     if (currentChatId != null) {
                         addTopButton(activity);
                     }
+                    return result;
                 }
             });
         } catch (Exception e) {
@@ -118,11 +123,11 @@ public class ReadChecker implements IHook {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
-                            callback.callOriginal();
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                            Object result = callback.callOriginal();
                             
                             Object[] args = callback.getArgs();
-                            if (args == null || args.length < 2 || args[1] == null) return;
+                            if (args == null || args.length < 2 || args[1] == null) return result;
 
                             String paramValue = args[1].toString();
                             if (paramValue.contains("type:NOTIFIED_READ_MESSAGE")) {
@@ -149,6 +154,7 @@ public class ReadChecker implements IHook {
                                     }
                                 }
                             }
+                            return result;
                         }
                     });
                 }
@@ -158,6 +164,7 @@ public class ReadChecker implements IHook {
         }
     }
 
+    // 後續 UI 與邏輯保持不變...
     private void addTopButton(Activity activity) {
         final int BUTTON_ID = 95279527;
         ViewGroup layout = activity.findViewById(android.R.id.content);
