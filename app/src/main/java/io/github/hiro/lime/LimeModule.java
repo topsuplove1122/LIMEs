@@ -10,8 +10,8 @@ public class LimeModule extends XposedModule {
     private final LimeOptions limeOptions = new LimeOptions();
 
     public LimeModule(@NonNull XposedInterface base, @NonNull XposedModuleInterface.ModuleLoadedParam param) {
-        super(); // 編譯器要求無參數
-        attachFramework(base); // API 101 必要步驟
+        super(); 
+        attachFramework(base); 
     }
 
     @Override
@@ -19,24 +19,21 @@ public class LimeModule extends XposedModule {
         super.onPackageReady(param);
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
 
-        // 修正 log 呼叫方式 (2 = INFO)
-        log(2, "LIMEs", "LINE 已就緒，啟動 Hook (API 101)");
+        log(2, "LIMEs", "LINE Ready. Starting Hooks (API 101)...");
+        Constants.initializeHooks(getContext(), this);
         runAllHooks(param.getClassLoader());
     }
 
     private void runAllHooks(ClassLoader classLoader) {
         IHook[] hooks = {
-            new RemoveAds(), 
-            new ChatList(), 
-            new UnsentRec(), // 確保此檔案存在且名稱正確
-            new PreventUnsendMessage(), 
-            new ReadChecker()
+            new RemoveAds(), new ChatList(), new UnsentRec(),
+            new PreventUnsendMessage(), new ReadChecker()
         };
         for (IHook hookItem : hooks) {
             try {
                 hookItem.hook(this, classLoader, limeOptions);
             } catch (Throwable t) {
-                log(4, "LIMEs", "Hook 失敗: " + t.getMessage());
+                log(4, "LIMEs", "Hook failed: " + t.getMessage());
             }
         }
     }
