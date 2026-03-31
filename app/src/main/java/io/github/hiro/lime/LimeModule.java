@@ -1,4 +1,4 @@
-package io.github.hiro.hiro.lime;
+package io.github.hiro.lime;
 
 import android.app.Application;
 import android.content.Context;
