@@ -93,7 +93,7 @@ public class ChatList implements IHook {
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                             Object result = chain.proceed();
                             
-                            Object[] args = chain.getArgs();
+                            List<Object> args = chain.getArgs();
                             if (args == null || args.length < 2 || args[1] == null) return result;
                             
                             String paramValue = args[1].toString();
