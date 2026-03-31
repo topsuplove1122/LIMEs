@@ -22,11 +22,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List; // 🛠️ 必須導入 List
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import io.github.hiro.lime.hooks.Constants;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
 import io.github.libxposed.api.XposedInterface;
@@ -42,10 +41,11 @@ public class ReadChecker implements IHook {
         // 1. 初始化資料庫與攔截封包 (Hook Application.onCreate)
         try {
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
-            module.hook(onCreateMethod, new XposedInterface.Hooker() {
+            // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
+            module.hook(onCreateMethod).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
-                    Object result = chain.proceed(); // 🛠️ 執行原始方法
+                    Object result = chain.proceed();
                     
                     Application appContext = (Application) chain.getThisObject();
                     if (appContext == null) return result;
@@ -81,11 +81,11 @@ public class ReadChecker implements IHook {
             Class<?> chatHistoryRequestClass = classLoader.loadClass("com.linecorp.line.chat.request.ChatHistoryRequest");
             Method getChatIdMethod = chatHistoryRequestClass.getDeclaredMethod("getChatId");
             
-            module.hook(getChatIdMethod, new XposedInterface.Hooker() {
+            // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
+            module.hook(getChatIdMethod).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                     Object result = chain.proceed();
-                    // 🛠️ 在 API 101 中，proceed 的回傳值就是該方法的 return 值
                     currentChatId = (String) result;
                     return result;
                 }
@@ -99,7 +99,8 @@ public class ReadChecker implements IHook {
             Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
 
-            module.hook(activityOnCreate, new XposedInterface.Hooker() {
+            // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
+            module.hook(activityOnCreate).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                     Object result = chain.proceed();
@@ -120,13 +121,13 @@ public class ReadChecker implements IHook {
             Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
-                    module.hook(method, new XposedInterface.Hooker() {
+                    // 🛠️ 修正點：hook(Method).intercept(new Hooker<...>...)
+                    module.hook(method).intercept(new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
                         @Override
                         public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                             Object result = chain.proceed();
                             
                             List<Object> args = chain.getArgs();
-                            // 🛠️ 修正：List 存取方式
                             if (args == null || args.size() < 2 || args.get(1) == null) return result;
 
                             String paramValue = args.get(1).toString();
@@ -164,7 +165,6 @@ public class ReadChecker implements IHook {
         }
     }
 
-    // --- UI 與工具方法保持不變 ---
     private void addTopButton(Activity activity) {
         final int BUTTON_ID = 95279527;
         ViewGroup layout = activity.findViewById(android.R.id.content);
