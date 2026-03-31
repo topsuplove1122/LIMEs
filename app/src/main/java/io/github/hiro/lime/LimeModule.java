@@ -17,40 +17,38 @@ public class LimeModule extends XposedModule {
         super();
     }
 
-    // 🚀 改回 onPackageLoaded，這是在 APP 剛被喚醒的最早期階段
     @Override
     public void onPackageLoaded(@NonNull XposedModuleInterface.PackageLoadedParam param) {
         super.onPackageLoaded(param);
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
 
-        log(2, "LIMEs", "1. LINE 已進入 onPackageLoaded，準備設置陷阱...");
-
         try {
-            // 設置陷阱：等待 Application.attachBaseContext 執行
-            Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
+            // 🚀 致命修正：attachBaseContext 是宣告在 ContextWrapper 裡的！
+            Method attachBaseContextMethod = android.content.ContextWrapper.class.getDeclaredMethod("attachBaseContext", Context.class);
+            
             hook(attachBaseContextMethod).intercept(chain -> {
                 Object result = chain.proceed();
                 
-                if (mContext == null) {
+                // 確認這是 Application 的啟動階段，而不是其他 Service 或 Activity
+                if (chain.getThisObject() instanceof Application && mContext == null) {
                     mContext = (Context) chain.getArgs().get(0);
-                    log(2, "LIMEs", "2. 成功取得 Context！列車抵達，開始初始化...");
+                    log(2, "LIMEs", "成功攔截 Context！開始載入模組...");
                     
-                    // 初始化常數
-                    Constants.initializeHooks(mContext, LimeModule.this);
-                    
-                    // 🚀 關鍵解法：直接從拿到的 Context 獲取 ClassLoader
+                    // 從 Context 取得最穩定的 ClassLoader
                     ClassLoader classLoader = mContext.getClassLoader();
+                    
+                    // 初始化常數與所有掛載點
+                    Constants.initializeHooks(mContext, LimeModule.this);
                     runAllHooks(classLoader);
                 }
                 return result;
             });
         } catch (Exception e) {
-            log(4, "LIMEs", "LIMEs 掛載 attachBaseContext 失敗: " + e.getMessage());
+            log(4, "LIMEs", "LIMEs 掛載失敗: " + e.getMessage());
         }
     }
 
     private void runAllHooks(ClassLoader classLoader) {
-        log(2, "LIMEs", "3. 開始分發所有的 Hooks...");
         IHook[] hooks = {
             new RemoveAds(), new ChatList(), new UnsentRec(),
             new PreventUnsendMessage(), new ReadChecker()
@@ -59,9 +57,9 @@ public class LimeModule extends XposedModule {
             try {
                 hookItem.hook(this, classLoader, limeOptions);
             } catch (Throwable t) {
-                log(4, "LIMEs", "❌ Hook 執行發生例外: " + t.getMessage());
+                log(4, "LIMEs", "Hook 例外錯誤: " + t.getMessage());
             }
         }
-        log(2, "LIMEs", "4. 所有 Hooks 分發完畢！模組啟動完成！");
+        log(2, "LIMEs", "LIMEs 模組所有功能已成功啟動！");
     }
 }
