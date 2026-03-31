@@ -13,32 +13,34 @@ public class LimeModule extends XposedModule {
     private Context mContext = null;
     private final LimeOptions limeOptions = new LimeOptions();
 
-    // 🛠️ 根據 API 101，建構子不需要參數
     public LimeModule() {
         super();
     }
 
+    // 🛠️ 修正點：使用 onPackageReady 而非 onPackageLoaded
+    // API 101 規定在 onPackageReady 才能獲取穩定的 ClassLoader
     @Override
-    public void onPackageLoaded(@NonNull XposedModuleInterface.PackageLoadedParam param) {
-        super.onPackageLoaded(param);
+    public void onPackageReady(@NonNull XposedModuleInterface.PackageReadyParam param) {
+        super.onPackageReady(param);
         if (!param.getPackageName().equals("jp.naver.line.android")) return;
 
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            // 🛠️ 完美優雅的 Lambda 寫法
             hook(attachBaseContextMethod).intercept(chain -> {
                 Object result = chain.proceed();
                 if (mContext == null) {
                     mContext = (Context) chain.getArgs().get(0);
-                    // 在這裡初始化常數與呼叫 Hook
+                    // 初始化常數與啟動所有 Hook
                     Constants.initializeHooks(mContext, LimeModule.this);
+                    
+                    // 這裡的 param.getClassLoader() 現在絕對找得到了！
                     runAllHooks(param.getClassLoader());
                 }
                 return result;
             });
         } catch (Exception e) {
-            // Android 內建 Log，保證安全印出錯誤
-            android.util.Log.e("LIMEs", "啟動失敗: " + e.getMessage());
+            // Android 內建 Log 避免報錯
+            android.util.Log.e("LIMEs", "LIMEs 啟動失敗: " + e.getMessage());
         }
     }
 
