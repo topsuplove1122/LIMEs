@@ -81,6 +81,7 @@ public class LimeModule extends XposedModule {
         hooks.add(new ChatList());
         hooks.add(new UnsentRec());
         hooks.add(new PreventUnsendMessage());
+        hooks.add(new ReadChecker());
 
         for (IHook hookItem : hooks) {
             try {
