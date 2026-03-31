@@ -76,7 +76,7 @@ public class UnsentRec implements IHook {
                             // 先執行原本的網路回應
                             Object result = chain.proceed();
 
-                            Object[] args = chain.getArgs();
+                            List<Object> args = chain.getArgs();
                             if (args == null || args.length < 2 || args[1] == null) return result;
 
                             String paramValue = args[1].toString();
