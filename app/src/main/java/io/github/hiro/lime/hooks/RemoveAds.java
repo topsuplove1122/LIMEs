@@ -26,7 +26,7 @@ public class RemoveAds implements IHook {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                             Object[] args = callback.getArgs();
                             if (args != null && args.length > 0 && args[0] != null) {
                                 String request = args[0].toString();
@@ -52,7 +52,7 @@ public class RemoveAds implements IHook {
             
             module.hook(dispatchDrawMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     View view = (View) callback.getThisObject();
                     if (view != null && view.getParent() instanceof View) {
                         ((View) view.getParent()).setVisibility(View.GONE);
@@ -71,7 +71,7 @@ public class RemoveAds implements IHook {
             
             module.hook(onAttachedMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     View view = (View) callback.getThisObject();
                     if (view != null && view.getParent() != null && view.getParent().getParent() instanceof View) {
                         View grandParent = (View) view.getParent().getParent();
@@ -94,7 +94,7 @@ public class RemoveAds implements IHook {
             Method addViewMethod = ViewGroup.class.getDeclaredMethod("addView", View.class, ViewGroup.LayoutParams.class);
             module.hook(addViewMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                     Object result = callback.callOriginal(); // 先讓它執行完
                     Object[] args = callback.getArgs();
                     if (args != null && args.length > 0 && args[0] instanceof View) {
@@ -120,7 +120,7 @@ public class RemoveAds implements IHook {
                     if (paramTypes.length == 2 && paramTypes[0] == WebView.class && paramTypes[1] == String.class) {
                         module.hook(method, new XposedInterface.Hooker() {
                             @Override
-                            public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                            public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
                                 Object result = callback.callOriginal();
                                 Object[] args = callback.getArgs();
                                 if (args != null && args.length > 0 && args[0] instanceof WebView) {
