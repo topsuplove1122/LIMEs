@@ -80,7 +80,7 @@ public class ReadChecker implements IHook {
 
         // 2. 獲取目前進入的聊天室 ID (Hook ChatHistoryRequest.getChatId)
         try {
-            Class chatHistoryRequestClass = classLoader.loadClass("com.linecorp.line.chat.request.ChatHistoryRequest");
+            Class<?> chatHistoryRequestClass = classLoader.loadClass("com.linecorp.line.chat.request.ChatHistoryRequest");
             Method getChatIdMethod = chatHistoryRequestClass.getDeclaredMethod("getChatId");
             
             module.hook(getChatIdMethod, new XposedInterface.Hooker() {
@@ -97,7 +97,7 @@ public class ReadChecker implements IHook {
 
         // 3. 加入按鈕 (Hook ChatHistoryActivity.onCreate)
         try {
-            Class chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
+            Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
 
             module.hook(activityOnCreate, new XposedInterface.Hooker() {
@@ -118,7 +118,7 @@ public class ReadChecker implements IHook {
 
     private void hookNetwork(LimeModule module, ClassLoader classLoader) {
         try {
-            Class responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
+            Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
