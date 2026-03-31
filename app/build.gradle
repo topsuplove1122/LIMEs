@@ -55,20 +55,7 @@ android {
         main {
             java {
                 // 排除所有你還沒改好的舊檔案，避免它們噴出 package de.robv 不存在的錯誤
-                exclude '**/PhotoAddNotification.java'
-                exclude '**/SendMuteMessage.java'
-                exclude '**/EmbedOptions.java'
-                exclude '**/AddRegistrationOptions.java'
-                exclude '**/CheckHookTargetVersion.java'
-                exclude '**/DarkColor.java'
-                exclude '**/Removebutton.java'
-                exclude '**/Disabled_Group_notification.java'
-                exclude '**/SpoofUserAgent.java'
-                exclude '**/PreventMarkAsRead.java'
-                exclude '**/AgeCheckSkip.java'
-                exclude '**/RingTone.java'
-                exclude '**/WhiteToDark.java'
-                exclude '**/test.java'
+                exclude '**/CustomPreferences.java'
             }
         }
     }
