@@ -54,8 +54,16 @@ android {
     sourceSets {
         main {
             java {
-                // 排除所有你還沒改好的舊檔案，避免它們噴出 package de.robv 不存在的錯誤
-                exclude '**/CustomPreferences.java'
+                include '**/LimeModule.java'
+                include '**/LimeOptions.java'
+                include '**/hooks/IHook.java'
+                include '**/hooks/Constants.java'
+                include '**/hooks/ChatList.java'
+                include '**/hooks/RemoveAds.java'
+                include '**/hooks/UnsentRec.java'
+                include '**/hooks/PreventUnsendMessage.java'
+                include '**/hooks/ReadChecker.java'
+                // ❌ 暫時移除 MainActivity，這樣就不會報找不到 Preferences 的錯了
             }
         }
     }
