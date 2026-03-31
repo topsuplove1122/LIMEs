@@ -1,12 +1,3 @@
-# 模組的唯一識別名
-name=LIMEs
-# 顯示給使用者看的版本號
-version=v1.28.5alpha
-# 系統識別用的版本代碼 (整數)
-versionCode=128
-# 作者名稱
-author=Reeky
-# 模組描述
-description=A modern LibXposed module for LINE modification.
-# 🚀 關鍵：必須設為 101 才能啟用 Modern API 功能
 minApiVersion=101
+targetApiVersion=101
+staticScope=false
