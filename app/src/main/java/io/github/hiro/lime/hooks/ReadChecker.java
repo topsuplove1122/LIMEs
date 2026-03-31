@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-// 移除舊版依賴，加入新版
+import io.github.hiro.lime.Constants;
 import io.github.hiro.lime.LimeModule;
 import io.github.hiro.lime.LimeOptions;
 import io.github.libxposed.api.XposedInterface;
@@ -44,10 +44,9 @@ public class ReadChecker implements IHook {
             Method onCreateMethod = Application.class.getDeclaredMethod("onCreate");
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {}
-
-                @Override
-                public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {
+                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    callback.callOriginal(); // 必須執行，否則 App 無法啟動
+                    
                     Application appContext = (Application) callback.getThisObject();
                     if (appContext == null) return;
 
@@ -55,16 +54,14 @@ public class ReadChecker implements IHook {
                     File dbFileContact = appContext.getDatabasePath("contact");
 
                     if (dbFileLine.exists() && dbFileContact.exists()) {
-                        SQLiteDatabase.OpenParams.Builder builder = null;
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                            builder = new SQLiteDatabase.OpenParams.Builder();
-                            builder.addOpenFlags(SQLiteDatabase.OPEN_READWRITE);
-                            SQLiteDatabase.OpenParams params = builder.build();
+                            SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
+                                    .addOpenFlags(SQLiteDatabase.OPEN_READWRITE)
+                                    .build();
 
                             db_line = SQLiteDatabase.openDatabase(dbFileLine, params);
                             db_contact = SQLiteDatabase.openDatabase(dbFileContact, params);
 
-                            // 建立輕量級的「水位線」進度表
                             try {
                                 db_line.execSQL("CREATE TABLE IF NOT EXISTS lime_read_watermarks (chat_id TEXT, reader_mid TEXT, max_msg_id INTEGER, PRIMARY KEY(chat_id, reader_mid))");
                             } catch (Exception ignored) {}
@@ -75,7 +72,7 @@ public class ReadChecker implements IHook {
                 }
             });
         } catch (Exception e) {
-            module.log("ReadChecker (onCreate) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (onCreate) 失敗: " + e.getMessage());
         }
 
         // 2. 獲取目前進入的聊天室 ID (Hook ChatHistoryRequest.getChatId)
@@ -85,28 +82,24 @@ public class ReadChecker implements IHook {
             
             module.hook(getChatIdMethod, new XposedInterface.Hooker() {
                 @Override
-                public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {}
-
-                @Override
-                public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {
+                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    callback.callOriginal();
                     currentChatId = (String) callback.getResult();
                 }
             });
         } catch (Exception e) {
-            module.log("ReadChecker (getChatId) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (getChatId) 失敗: " + e.getMessage());
         }
 
-        // 3. 在畫面上方加入「查看已讀」按鈕 (Hook ChatHistoryActivity.onCreate)
+        // 3. 在畫面上方加入按鈕 (Hook ChatHistoryActivity.onCreate)
         try {
             Class<?> chatHistoryActivityClass = classLoader.loadClass("jp.naver.line.android.activity.chathistory.ChatHistoryActivity");
             Method activityOnCreate = chatHistoryActivityClass.getDeclaredMethod("onCreate", Bundle.class);
 
             module.hook(activityOnCreate, new XposedInterface.Hooker() {
                 @Override
-                public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {}
-
-                @Override
-                public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {
+                public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                    callback.callOriginal();
                     Activity activity = (Activity) callback.getThisObject();
                     if (currentChatId != null) {
                         addTopButton(activity);
@@ -114,7 +107,7 @@ public class ReadChecker implements IHook {
                 }
             });
         } catch (Exception e) {
-            module.log("ReadChecker (Activity) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (Activity) 失敗: " + e.getMessage());
         }
     }
 
@@ -125,10 +118,9 @@ public class ReadChecker implements IHook {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public void beforeInvoke(@NonNull XposedInterface.BeforeHookCallback callback) {}
-
-                        @Override
-                        public void afterInvoke(@NonNull XposedInterface.AfterHookCallback callback) {
+                        public void intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
+                            callback.callOriginal();
+                            
                             Object[] args = callback.getArgs();
                             if (args == null || args.length < 2 || args[1] == null) return;
 
@@ -143,7 +135,6 @@ public class ReadChecker implements IHook {
                                         if (readerMid != null && msgIdStr != null && db_line != null) {
                                             try {
                                                 long msgId = Long.parseLong(msgIdStr);
-                                                // 拿訊息 ID 去反查真正的 Chat ID
                                                 try (Cursor c = db_line.rawQuery("SELECT chat_id FROM chat_history WHERE server_id = ?", new String[]{msgIdStr})) {
                                                     if (c.moveToFirst()) {
                                                         String exactChatId = c.getString(0);
@@ -152,7 +143,7 @@ public class ReadChecker implements IHook {
                                                     }
                                                 }
                                             } catch (Exception e) {
-                                                module.log("ReadChecker Network Error: " + e.getMessage());
+                                                module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker Network Error: " + e.getMessage());
                                             }
                                         }
                                     }
@@ -163,11 +154,10 @@ public class ReadChecker implements IHook {
                 }
             }
         } catch (Exception e) {
-            module.log("ReadChecker (Network) Hook 失敗: " + e.getMessage());
+            module.log(XposedInterface.LOG_LEVEL_ERROR, "LIMEs", "ReadChecker (Network) 失敗: " + e.getMessage());
         }
     }
 
-    // 引擎二：全局記憶位置的拖曳按鈕 (這部分邏輯不變)
     private void addTopButton(Activity activity) {
         final int BUTTON_ID = 95279527;
         ViewGroup layout = activity.findViewById(android.R.id.content);
@@ -211,45 +201,32 @@ public class ReadChecker implements IHook {
             }).start();
         });
 
-        // 觸控事件處理 (維持原本邏輯)
         btn.setOnTouchListener(new android.view.View.OnTouchListener() {
-            private int initialX;
-            private int initialY;
-            private float initialTouchX;
-            private float initialTouchY;
+            private int initialX, initialY;
+            private float initialTouchX, initialTouchY;
             private boolean isMoved = false;
             @Override
             public boolean onTouch(android.view.View v, android.view.MotionEvent event) {
                 FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) v.getLayoutParams();
                 switch (event.getAction()) {
                     case android.view.MotionEvent.ACTION_DOWN:
-                        initialX = lp.leftMargin;
-                        initialY = lp.topMargin;
-                        initialTouchX = event.getRawX();
-                        initialTouchY = event.getRawY();
-                        isMoved = false;
-                        return true;
+                        initialX = lp.leftMargin; initialY = lp.topMargin;
+                        initialTouchX = event.getRawX(); initialTouchY = event.getRawY();
+                        isMoved = false; return true;
                     case android.view.MotionEvent.ACTION_MOVE:
                         int dx = (int) (event.getRawX() - initialTouchX);
                         int dy = (int) (event.getRawY() - initialTouchY);
                         if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isMoved = true;
-                        lp.leftMargin = initialX + dx;
-                        lp.topMargin = initialY + dy;
-                        lp.rightMargin = 0;
-                        lp.bottomMargin = 0;
-                        v.setLayoutParams(lp);
-                        return true;
+                        lp.leftMargin = initialX + dx; lp.topMargin = initialY + dy;
+                        v.setLayoutParams(lp); return true;
                     case android.view.MotionEvent.ACTION_UP:
                         if (!isMoved) v.performClick();
-                        else {
-                            prefs.edit().putInt("btn_x", lp.leftMargin).putInt("btn_y", lp.topMargin).apply();
-                        }
+                        else prefs.edit().putInt("btn_x", lp.leftMargin).putInt("btn_y", lp.topMargin).apply();
                         return true;
                 }
                 return false;
             }
         });
-
         layout.addView(btn);
     }
 
@@ -258,21 +235,13 @@ public class ReadChecker implements IHook {
         try {
             Map<String, Long> watermarks = new HashMap<>();
             try (Cursor cWater = db_line.rawQuery("SELECT reader_mid, max_msg_id FROM lime_read_watermarks WHERE chat_id = ?", new String[]{currentChatId})) {
-                while (cWater.moveToNext()) {
-                    watermarks.put(cWater.getString(0), cWater.getLong(1));
-                }
+                while (cWater.moveToNext()) { watermarks.put(cWater.getString(0), cWater.getLong(1)); }
             }
-
             try (Cursor cMsg = db_line.rawQuery("SELECT server_id, content, created_time FROM chat_history WHERE chat_id = ? AND from_mid IS NULL AND type = 1 ORDER BY CAST(server_id AS INTEGER) DESC LIMIT 15", new String[]{currentChatId})) {
-                if (cMsg.getCount() == 0) return "最近沒有傳送文字訊息，或資料庫尚未同步。";
-
+                if (cMsg.getCount() == 0) return "最近沒有傳送文字訊息。";
                 while (cMsg.moveToNext()) {
                     long serverId = cMsg.getLong(0);
-                    String content = cMsg.getString(1);
-                    String timeStr = cMsg.getString(2);
-                    sb.append("💬 ").append(content).append("\n");
-                    sb.append("🕒 ").append(formatTime(timeStr)).append("\n");
-
+                    sb.append("💬 ").append(cMsg.getString(1)).append("\n🕒 ").append(formatTime(cMsg.getString(2))).append("\n");
                     List<String> readers = new ArrayList<>();
                     for (Map.Entry<String, Long> entry : watermarks.entrySet()) {
                         if (entry.getValue() >= serverId) {
@@ -280,7 +249,6 @@ public class ReadChecker implements IHook {
                             readers.add(name != null ? name : "未知名稱");
                         }
                     }
-
                     if (readers.isEmpty()) sb.append("❌ 尚無人已讀\n\n");
                     else {
                         sb.append("👀 已讀 (").append(readers.size()).append(")：\n");
@@ -289,9 +257,7 @@ public class ReadChecker implements IHook {
                     }
                 }
             }
-        } catch (Exception e) {
-            sb.append("發生錯誤：").append(e.getMessage());
-        }
+        } catch (Exception e) { sb.append("發生錯誤：").append(e.getMessage()); }
         return sb.toString();
     }
 
@@ -313,8 +279,7 @@ public class ReadChecker implements IHook {
 
     private String formatTime(String epochStr) {
         try {
-            long time = Long.parseLong(epochStr);
-            return new SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(new Date(time));
+            return new SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(new Date(Long.parseLong(epochStr)));
         } catch (Exception e) { return "未知時間"; }
     }
 }
