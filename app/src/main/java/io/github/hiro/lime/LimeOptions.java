@@ -2,7 +2,7 @@ package io.github.hiro.lime;
 
 import android.content.Context;
 
-import io.github.hiro.lime.hooks.DisableSilentMessage;
+// import io.github.hiro.lime.hooks.DisableSilentMessage;
 
 public class LimeOptions {
 
