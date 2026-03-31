@@ -1,7 +1,5 @@
 plugins {
     id 'com.android.application'
-    // 🚀 修正 1：加上 LibXposed 官方模組打包插件 (負責自動生成 META-INF 配置)
-    id 'io.github.libxposed.module' version '1.0.6' 
 }
 
 android {
@@ -92,6 +90,12 @@ android {
     aaptOptions {
         additionalParameters '--allow-reserved-package-id', '--package-id', '0x64'
     }
+
+    packaging {
+        resources {
+            merges += ['META-INF/xposed/*']
+        }
+    }
 }
 
 dependencies {
@@ -112,12 +116,4 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
-}
-
-// 🚀 修正 2：透過 DSL 明確告訴 LibXposed 你的主類別是誰！
-// 插件會根據這個設定，自動把鑰匙交給 LSPosed。
-libxposed {
-    moduleInfo {
-        moduleClass = "io.github.hiro.lime.LimeModule"
-    }
 }
