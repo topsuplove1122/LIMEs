@@ -14,7 +14,7 @@ public class PreventUnsendMessage implements IHook {
         Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
         Method targetMethod = responseClass.getDeclaredMethod(Constants.RESPONSE_HOOK.methodName, Object.class, Object.class);
 
-        module.hook(targetMethod, new XposedInterface.Hooker() {
+        module.hook(targetMethod, new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
             @Override
             public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                 Object result = chain.proceed();
