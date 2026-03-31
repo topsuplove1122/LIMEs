@@ -81,7 +81,7 @@ public class ChatList implements IHook {
 
     private void hookMessageDeletion(LimeModule module, ClassLoader classLoader, SQLiteDatabase db) {
         try {
-            Class requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
+            Class<?> requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
             for (Method method : requestClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
@@ -114,7 +114,7 @@ public class ChatList implements IHook {
                 }
             }
 
-            Class responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
+            Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
