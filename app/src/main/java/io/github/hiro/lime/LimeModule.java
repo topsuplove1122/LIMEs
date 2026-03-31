@@ -25,19 +25,18 @@ public class LimeModule extends XposedModule {
 
         log(2, "LIMEs", "LINE 已就緒，啟動 Hook (API 101)");
 
-        // 必須先透過 Application 取得 Context 才能初始化
         try {
             Method attachBaseContextMethod = Application.class.getDeclaredMethod("attachBaseContext", Context.class);
-            // 🛠️ 修正：加入明確的泛型標籤 <XposedInterface.BeforeHookCallback>
-            hook(attachBaseContextMethod, new XposedInterface.Hooker<XposedInterface.BeforeHookCallback>() {
+            // 🛠️ 修正：使用 .intercept() 串接
+            hook(attachBaseContextMethod).intercept(new XposedInterface.Hooker() {
                 @Override
                 public Object intercept(@NonNull XposedInterface.Chain chain) throws Throwable {
                     Object result = chain.proceed();
                     if (mContext == null) {
                         mContext = (Context) chain.getArgs().get(0);
-                        // 🛠️ 修正：使用剛取得的 mContext
+                        // 取得 Context 後才進行初始化
                         Constants.initializeHooks(mContext, LimeModule.this);
-                        runAllHooks(mContext.getClassLoader());
+                        runAllHooks(param.getClassLoader());
                     }
                     return result;
                 }
