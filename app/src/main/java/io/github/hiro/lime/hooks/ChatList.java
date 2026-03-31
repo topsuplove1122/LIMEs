@@ -26,7 +26,7 @@ public class ChatList implements IHook {
 
             module.hook(onCreateMethod, new XposedInterface.Hooker() {
                 @Override
-                public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                     // 1. 先執行原始方法 (手動呼叫並獲取回傳值)
                     Object result = callback.callOriginal();
                     
@@ -81,12 +81,12 @@ public class ChatList implements IHook {
 
     private void hookMessageDeletion(LimeModule module, ClassLoader classLoader, SQLiteDatabase db) {
         try {
-            Class<?> requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
+            Class requestClass = classLoader.loadClass(Constants.REQUEST_HOOK.className);
             for (Method method : requestClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.REQUEST_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             Object result = callback.callOriginal();
                             
                             Object[] args = callback.getArgs();
@@ -114,12 +114,12 @@ public class ChatList implements IHook {
                 }
             }
 
-            Class<?> responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
+            Class responseClass = classLoader.loadClass(Constants.RESPONSE_HOOK.className);
             for (Method method : responseClass.getDeclaredMethods()) {
                 if (method.getName().equals(Constants.RESPONSE_HOOK.methodName)) {
                     module.hook(method, new XposedInterface.Hooker() {
                         @Override
-                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback<?> callback) throws Throwable {
+                        public Object intercept(@NonNull XposedInterface.BeforeHookCallback callback) throws Throwable {
                             Object result = callback.callOriginal();
                             try {
                                 db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id IN (SELECT chat_id FROM lime_hidden_chats)");
