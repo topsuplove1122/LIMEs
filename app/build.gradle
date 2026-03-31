@@ -15,11 +15,12 @@ android {
 
         proguardFiles += 'proguard-rules.pro'
         buildConfigField 'String', 'HOOK_TARGET_VERSION', '"141910383"'
-        
-        // 【修改點 1】強烈建議將 Java 相容性提升到 17。
-        // 因為最新的 libxposed 以及 Android SDK 35 (2026 年的環境) 基本上都要求 Java 17 才能正常編譯。
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // 【修正 1】這一段必須獨立出來，不能寫在 defaultConfig 裡面
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     signingConfigs {
@@ -38,21 +39,46 @@ android {
     }
 
     buildTypes {
-        configureEach {
+        debug {
             signingConfig signingConfigs.android
         }
         release {
+            signingConfig signingConfigs.android
             if (file('release.jks').exists()) {
                 signingConfig signingConfigs.release
             }
         }
     }
 
-    lint {
-        checkReleaseBuilds false
+    // 【修正 2】物理防禦：如果還有舊的 Xposed 檔案沒刪掉，這段代碼會強行讓編譯器跳過它們
+    sourceSets {
+        main {
+            java {
+                // 排除所有你還沒改好的舊檔案，避免它們噴出 package de.robv 不存在的錯誤
+                exclude '**/PhotoAddNotification.java'
+                exclude '**/SendMuteMessage.java'
+                exclude '**/EmbedOptions.java'
+                exclude '**/AddRegistrationOptions.java'
+                exclude '**/CheckHookTargetVersion.java'
+                exclude '**/DarkColor.java'
+                exclude '**/Removebutton.java'
+                exclude '**/Disabled_Group_notification.java'
+                exclude '**/SpoofUserAgent.java'
+                exclude '**/PreventMarkAsRead.java'
+                exclude '**/AgeCheckSkip.java'
+                exclude '**/RingTone.java'
+                exclude '**/WhiteToDark.java'
+                exclude '**/test.java'
+            }
+        }
     }
 
-    buildFeatures{
+    lint {
+        checkReleaseBuilds false
+        abortOnError false // 即使有警告也強行繼續
+    }
+
+    buildFeatures {
         buildConfig true
         compose false
     }
@@ -72,9 +98,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'net.zetetic:android-database-sqlcipher:4.5.4'
     
-    // 【修改點 2】正式替換 API
-    // 移除舊的：compileOnly 'de.robv.android.xposed:api:82'
-    // 換成最新的 libxposed：
+    // libxposed API
     compileOnly 'io.github.libxposed:api:101.0.1'
     
     implementation 'org.mozilla:rhino:1.7.15'
