@@ -24,7 +24,7 @@ public class Constants {
     static  HookTarget Archive = new HookTarget("LB.W", "invokeSuspend");
 
         // 這是你親手找出來的最新入口！
-    static  HookTarget REQUEST_HOOK = new HookTarget("org.apache.thrift.p, "b");
+    static  HookTarget REQUEST_HOOK = new HookTarget("org.apache.thrift.p", "b");
     static  HookTarget RESPONSE_HOOK = new HookTarget("org.apache.thrift.p", "a");
     //BackEventCompat
     static HookTarget  RemoveVoiceRecord_Hook_a = new HookTarget("q.j", "run");
