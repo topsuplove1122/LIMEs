@@ -29,10 +29,9 @@ public class ChatList implements IHook {
                         SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile, builder.build());
 
                         try {
-                            // 1. 建立專屬黑名單表格
                             db.execSQL("CREATE TABLE IF NOT EXISTS lime_hidden_chats (chat_id TEXT PRIMARY KEY)");
                             
-                            // 2. 防閃爍觸發器 A：當新訊息抵達時，直接在底層封印
+                            // 如果這裡報錯，代表 is_archived 欄位被改名了！
                             db.execSQL("CREATE TRIGGER IF NOT EXISTS enforce_hide_on_msg " +
                                     "AFTER INSERT ON chat_history " +
                                     "FOR EACH ROW " +
@@ -41,7 +40,6 @@ public class ChatList implements IHook {
                                     "UPDATE chat SET is_archived = 1 WHERE chat_id = NEW.chat_id; " +
                                     "END;");
 
-                            // 3. 防閃爍觸發器 B：攔截 LINE 自身的狀態更新
                             db.execSQL("CREATE TRIGGER IF NOT EXISTS enforce_hide_on_update " +
                                     "AFTER UPDATE OF is_archived ON chat " +
                                     "FOR EACH ROW " +
@@ -49,8 +47,17 @@ public class ChatList implements IHook {
                                     "BEGIN " +
                                     "UPDATE chat SET is_archived = 1 WHERE chat_id = NEW.chat_id; " +
                                     "END;");
+
+                            db.execSQL("CREATE TRIGGER IF NOT EXISTS enforce_hide_on_insert_chat " +
+                                    "AFTER INSERT ON chat " +
+                                    "FOR EACH ROW " +
+                                    "WHEN NEW.is_archived = 0 AND EXISTS (SELECT 1 FROM lime_hidden_chats WHERE chat_id = NEW.chat_id) " +
+                                    "BEGIN " +
+                                    "UPDATE chat SET is_archived = 1 WHERE chat_id = NEW.chat_id; " +
+                                    "END;");
                         } catch (Exception e) {
-                            XposedBridge.log("Lime Trigger Error: " + e.getMessage());
+                            // 💥 裝上雷達：如果資料庫寫入失敗，馬上印出紅字
+                            XposedBridge.log("Lime Hide DB CRASH: " + e.getMessage());
                         }
 
                         hookMessageDeletion(loadPackageParam, db);
@@ -62,7 +69,6 @@ public class ChatList implements IHook {
 
     private void hookMessageDeletion(XC_LoadPackage.LoadPackageParam loadPackageParam, SQLiteDatabase db) {
         try {
-            // 攔截你的手動操作 (寫入黑名單)
             XposedBridge.hookAllMethods(
                     loadPackageParam.classLoader.loadClass(Constants.REQUEST_HOOK.className),
                     Constants.REQUEST_HOOK.methodName,
@@ -71,14 +77,18 @@ public class ChatList implements IHook {
                         protected void afterHookedMethod(MethodHookParam param) {
                             String paramValue = param.args[1].toString();
                             
-                            if (paramValue.contains("setChatHiddenStatusRequest")) {
+                            // 💥 裝上雷達：只要操作包含聊天室 ID，一律印出來看 LINE 改了什麼指令
+                            if (paramValue.contains("chatMid:")) {
+                                XposedBridge.log("Lime Hide Request Probe: " + paramValue);
+                                
                                 String talkId = extractTalkId(paramValue);
                                 if (talkId != null) {
-                                    if (paramValue.contains("hiddenStatus:true") || paramValue.contains("hidden:true")) {
+                                    // 盡量放寬條件，只要有 hide 或 hidden 相關字眼就抓
+                                    if (paramValue.contains("true") && paramValue.toLowerCase().contains("hid")) {
                                         db.execSQL("INSERT OR IGNORE INTO lime_hidden_chats (chat_id) VALUES (?)", new Object[]{talkId});
                                         db.execSQL("UPDATE chat SET is_archived = 1 WHERE chat_id = ?", new Object[]{talkId});
                                         XposedBridge.log("Lime: Successfully Hid Chat " + talkId);
-                                    } else if (paramValue.contains("hiddenStatus:false") || paramValue.contains("hidden:false")) {
+                                    } else if (paramValue.contains("false") && paramValue.toLowerCase().contains("hid")) {
                                         db.execSQL("DELETE FROM lime_hidden_chats WHERE chat_id = ?", new Object[]{talkId});
                                         db.execSQL("UPDATE chat SET is_archived = 0 WHERE chat_id = ?", new Object[]{talkId});
                                         XposedBridge.log("Lime: Unhid Chat " + talkId);
@@ -88,7 +98,6 @@ public class ChatList implements IHook {
                         }
                     });
 
-            // 網路同步兜底 (保底機制)
             XposedBridge.hookAllMethods(
                     loadPackageParam.classLoader.loadClass(Constants.RESPONSE_HOOK.className),
                     Constants.RESPONSE_HOOK.methodName,
@@ -103,13 +112,12 @@ public class ChatList implements IHook {
         } catch (ClassNotFoundException ignored) {}
     }
 
-    // 💥 完美字串擷取：使用正則表達式，再也不怕序號變動！
     private String extractTalkId(String paramValue) {
         try {
-            Pattern pattern = Pattern.compile("chatMid:([^,\\)]+)");
+            Pattern pattern = Pattern.compile("chatMid:([a-zA-Z0-9]+)");
             Matcher matcher = pattern.matcher(paramValue);
             if (matcher.find()) {
-                return matcher.group(1).trim();
+                return matcher.group(1);
             }
         } catch (Exception e) {}
         return null;
